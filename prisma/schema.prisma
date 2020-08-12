@@ -1,0 +1,1224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Access {
+  abbr        String?
+  id          Int     @default(autoincrement()) @id
+  name        String
+  test_access Boolean
+}
+
+model Account {
+  account_creator_id                            Int
+  acct_num                                      String         @unique
+  additional_location                           String?
+  advisor_id                                    Int
+  contact_primary_id                            Int
+  contact_secondary_id                          Int?
+  from_lead_id                                  Int?
+  id                                            Int            @default(autoincrement()) @id
+  lead_campaign_id                              Int?
+  lead_creator_id                               Int
+  location_id                                   Int
+  organization_id                               Int            @default(1)
+  stage                                         Account_stage
+  status                                        Account_status @default(Active)
+  test_acct                                     Boolean
+  type                                          Account_type   @default(Residential)
+  User_Account_account_creator_idToUser         User           @relation("Account_account_creator_idToUser", fields: [account_creator_id], references: [id])
+  User_Account_advisor_idToUser                 User           @relation("Account_advisor_idToUser", fields: [advisor_id], references: [id])
+  Contact_Account_contact_primary_idToContact   Contact        @relation("Account_contact_primary_idToContact", fields: [contact_primary_id], references: [id])
+  Contact_Account_contact_secondary_idToContact Contact?       @relation("Account_contact_secondary_idToContact", fields: [contact_secondary_id], references: [id])
+  Lead                                          Lead?          @relation(fields: [from_lead_id], references: [id])
+  LeadCampaign                                  LeadCampaign?  @relation(fields: [lead_campaign_id], references: [id])
+  User_Account_lead_creator_idToUser            User           @relation("Account_lead_creator_idToUser", fields: [lead_creator_id], references: [id])
+  Location                                      Location       @relation(fields: [location_id], references: [id])
+  Company                                       Company        @relation(fields: [organization_id], references: [id])
+  Assessment                                    Assessment[]
+
+  @@index([contact_primary_id], name: "contact_primary_id")
+  @@index([contact_secondary_id], name: "contact_secondary_id")
+  @@index([account_creator_id], name: "creator_id")
+  @@index([from_lead_id], name: "from_lead_id")
+  @@index([lead_campaign_id], name: "lead_campaign_id")
+  @@index([lead_creator_id], name: "lead_creator_id")
+  @@index([location_id], name: "location_id")
+  @@index([organization_id], name: "organization_name_id")
+  @@index([advisor_id], name: "owner_id")
+}
+
+model AccountMarketingTag {
+  description String?
+  id          Int     @default(autoincrement()) @id
+  name        String
+}
+
+model AccountNote {
+  added_by_id   Int
+  id            Int              @default(autoincrement()) @id
+  important_pin Boolean
+  note_content  String
+  type          AccountNote_type
+  User          User             @relation(fields: [added_by_id], references: [id])
+
+  @@index([added_by_id], name: "added_by_id")
+}
+
+model Assessment {
+  account_id       Int?
+  assessor_id      Int
+  date_assessed    DateTime           @default(now())
+  id               Int                @default(autoincrement()) @unique
+  lead_campaign_id Int?
+  lead_id          Int?
+  Account          Account?           @relation(fields: [account_id], references: [id])
+  User             User               @relation(fields: [assessor_id], references: [id])
+  Lead             Lead?              @relation(fields: [lead_id], references: [id])
+  AssessmentAnswer AssessmentAnswer[]
+
+  @@index([account_id], name: "account_id")
+  @@index([assessor_id], name: "assessor_id")
+  @@index([lead_id], name: "lead_id")
+}
+
+model AssessmentAnswer {
+  answer             String?
+  assessment_id      Int
+  id                 Int                @default(autoincrement()) @id
+  phrasing_id        Int
+  question_id        Int
+  Assessment         Assessment         @relation(fields: [assessment_id], references: [id])
+  AssessmentPhrasing AssessmentPhrasing @relation(fields: [phrasing_id], references: [id])
+  AssessmentQuestion AssessmentQuestion @relation(fields: [question_id], references: [id])
+
+  @@index([assessment_id], name: "assessment_id")
+  @@index([phrasing_id], name: "phrasing_id")
+  @@index([question_id], name: "question_id")
+}
+
+model AssessmentPhrasing {
+  id                                                                            Int                 @default(autoincrement()) @id
+  phrasing                                                                      String?
+  question_id                                                                   Int
+  related_info                                                                  String?
+  AssessmentQuestion                                                            AssessmentQuestion  @relation("AssessmentPhrasing_question_idToAssessmentQuestion", fields: [question_id], references: [id])
+  AssessmentAnswers                                                             AssessmentAnswer[]
+  AssessmentQuestion_AssessmentPhrasingToAssessmentQuestion_current_phrasing_id AssessmentQuestion? @relation("AssessmentPhrasingToAssessmentQuestion_current_phrasing_id")
+
+  @@index([question_id], name: "question_id")
+}
+
+model AssessmentQuestion {
+  answer_type           String?
+  category              String?
+  current_phrasing_id   Int?                   @unique
+  enum                  String?
+  id                    Int                    @default(autoincrement()) @id
+  info_type             String?
+  question              String?
+  required              Boolean?
+  AssessmentPhrasing    AssessmentPhrasing?    @relation("AssessmentPhrasingToAssessmentQuestion_current_phrasing_id", fields: [current_phrasing_id], references: [id])
+  AssessmentAnswers     AssessmentAnswer[]
+  AssessmentPhrasings   AssessmentPhrasing[]   @relation("AssessmentPhrasing_question_idToAssessmentQuestion")
+  EnumAssessmentAnswers EnumAssessmentAnswer[]
+}
+
+model Company {
+  active        Boolean
+  id            Int            @default(autoincrement()) @id
+  name          String
+  parent_co     Int?
+  test_co       Boolean
+  Company       Company?       @relation("CompanyToCompany_parent_co", fields: [parent_co], references: [id])
+  Account       Account[]
+  other_Company Company[]      @relation("CompanyToCompany_parent_co")
+  LeadCampaign  LeadCampaign[]
+  User          User[]
+
+  @@index([parent_co], name: "parent_co")
+}
+
+model Contact {
+  additional_location                           String?
+  email_one                                     String                         @unique
+  email_two                                     String?
+  first_name                                    String
+  id                                            Int                            @default(autoincrement()) @id
+  last_name                                     String
+  lead_campaign_disqual_reason_id               Int?
+  legal_first_name                              String?
+  marketing_callable                            Boolean?
+  marketing_disqual_reason_id                   Int?
+  marketing_emailable                           Boolean?
+  marketing_qualified                           Boolean                        @default(true)
+  marketing_tag_collection                      String?
+  marketing_textable                            Boolean?
+  middle_name                                   String?
+  notification_preference_call                  Boolean?
+  notification_preference_email                 Boolean?
+  notification_preference_text                  Boolean?
+  phone_cell                                    String                         @unique
+  phone_home                                    String?
+  preferred_first_name                          String?
+  primary_location_id                           Int?
+  sales_disqual_reason_id                       Int?
+  sales_qualified                               Boolean                        @default(true)
+  spanish_speaker                               Boolean?
+  suffix                                        String?
+  test_contact                                  Boolean
+  EnumLeadCampaignDisqualReason                 EnumLeadCampaignDisqualReason? @relation(fields: [lead_campaign_disqual_reason_id], references: [id])
+  EnumMarketingDisqualReason                    EnumMarketingDisqualReason?    @relation(fields: [marketing_disqual_reason_id], references: [id])
+  Location                                      Location?                      @relation(fields: [primary_location_id], references: [id])
+  EnumSalesDisqualReason                        EnumSalesDisqualReason?        @relation(fields: [sales_disqual_reason_id], references: [id])
+  Account_Account_contact_primary_idToContact   Account[]                      @relation("Account_contact_primary_idToContact")
+  Account_Account_contact_secondary_idToContact Account[]                      @relation("Account_contact_secondary_idToContact")
+
+  @@index([lead_campaign_disqual_reason_id], name: "lead_campaign_disqual_reason")
+  @@index([marketing_disqual_reason_id], name: "marketing_disqual_reason")
+  @@index([primary_location_id], name: "primary_location_id")
+  @@index([sales_disqual_reason_id], name: "sales_disqual_reason")
+}
+
+model ContactCommunicationLog {
+  callback_datetime_requested DateTime?
+  callback_requested          Boolean                           @default(false)
+  contact_comm_dispo_id       Int
+  contact_comm_type_id        Int
+  date                        DateTime
+  direction                   ContactCommunicationLog_direction
+  id                          Int                               @default(autoincrement()) @id
+  is_callback                 Boolean?
+  log_creator_id              Int
+  note                        String
+  EnumContactCommDispo        EnumContactCommDispo              @relation(fields: [contact_comm_dispo_id], references: [id])
+  EnumCommunicationType       EnumCommunicationType             @relation(fields: [contact_comm_type_id], references: [id])
+  User                        User                              @relation(fields: [log_creator_id], references: [id])
+
+  @@index([contact_comm_dispo_id], name: "contact_comm_dispo_id")
+  @@index([contact_comm_type_id], name: "contact_comm_type_id")
+  @@index([log_creator_id], name: "log_creator_id")
+}
+
+model DNC {
+  id      Int  @default(autoincrement()) @id
+  lead_id Int?
+}
+
+model EnumAgreementApprovalStep {
+  id          Int           @default(autoincrement()) @id
+  name        String
+  Opportunity Opportunity[]
+}
+
+model EnumAssessmentAnswer {
+  choice             String?
+  id                 Int                 @default(autoincrement()) @unique
+  image              String?
+  question_id        Int?
+  AssessmentQuestion AssessmentQuestion? @relation(fields: [question_id], references: [id])
+
+  @@index([question_id], name: "question_id")
+}
+
+model EnumCommunicationType {
+  description             String?
+  id                      Int                       @default(autoincrement()) @id
+  name                    String
+  ContactCommunicationLog ContactCommunicationLog[]
+  LeadWorkingEventLog     LeadWorkingEventLog[]
+}
+
+model EnumContactCommDispo {
+  description             String?
+  id                      Int                       @default(autoincrement()) @id
+  name                    String
+  ContactCommunicationLog ContactCommunicationLog[]
+}
+
+model EnumLeadCampaignDisqualReason {
+  id      Int       @default(autoincrement()) @unique
+  name    String
+  Contact Contact[]
+  Lead    Lead[]
+}
+
+model EnumLeadWorkingEventDispo {
+  description         String?
+  id                  Int                   @default(autoincrement()) @id
+  name                String
+  LeadWorkingEventLog LeadWorkingEventLog[]
+}
+
+model EnumMarketingDisqualReason {
+  id      Int       @default(autoincrement()) @unique
+  name    String
+  Contact Contact[]
+  Lead    Lead[]
+}
+
+model EnumPresentationResultDispo {
+  description             String?
+  id                      Int                       @default(autoincrement()) @id
+  name                    String
+  PresentationAppointment PresentationAppointment[]
+}
+
+model EnumSalesDisqualReason {
+  id      Int       @default(autoincrement()) @unique
+  name    String
+  Contact Contact[]
+}
+
+model EnumStateAbbr {
+  abbr String?
+  id   Int     @default(autoincrement()) @id
+  name String?
+}
+
+model EnumTaskType {
+  description String?
+  id          Int     @default(autoincrement()) @id
+  name        String
+  Task        Task[]
+}
+
+model FinanceCompany {
+  id   Int     @default(autoincrement()) @id
+  name String?
+}
+
+model FinanceLog {
+  id          Int      @default(autoincrement()) @id
+  placeholder Boolean?
+}
+
+model FinanceRatePlan {
+  active          Boolean?
+  apr             String?
+  base_fee        String?
+  customer_fee    String?
+  dealer_points   String?
+  default_rate    String?
+  finance_company String?
+  finance_fee     String?
+  id              Int      @default(autoincrement()) @id
+  interest_only   String?
+  no_incentive    String?
+  post_incentive  String?
+  term_length     String?
+  term_name       String?
+}
+
+model Group {
+  email       String?
+  id          Int     @default(autoincrement()) @id
+  name        String
+  parent_id   Int?
+  type        String?
+  Group       Group?  @relation("GroupToGroup_parent_id", fields: [parent_id], references: [id])
+  other_Group Group[] @relation("GroupToGroup_parent_id")
+  Task        Task[]
+
+  @@index([parent_id], name: "parent_id")
+}
+
+model Inventory {
+  active              Boolean
+  battery_size_kw     String?
+  category            String
+  color               String?
+  date_added          DateTime?
+  date_updated        DateTime?
+  description         String?
+  detail              String?
+  id                  Int            @default(autoincrement()) @id
+  info_card_link      String?
+  inverter_monitoring String?
+  inverter_size_kw    String?
+  manufacturer        String?
+  model_number        String?
+  name                String
+  reference_name      String?
+  type                Inventory_type
+  type_subtype        String?
+  volts               String?
+  warranty_card_link  String?
+  watts               String?
+  watts_ptc           String?
+}
+
+model Lead {
+  address_one                     String?
+  address_two                     String?
+  address_verified                Boolean                        @default(false)
+  assessment_complete             Boolean?                       @default(false)
+  city                            String?
+  email_one                       String?                        @unique
+  email_two                       String?
+  first_name                      String
+  gate_code                       String?
+  id                              Int                            @default(autoincrement()) @id
+  last_name                       String
+  latitude                        String?                        @default("NULL")
+  lead_campaign_disqual_reason_id Int?
+  lead_campaign_id                Int                            @default(4)
+  lead_converter_id               Int?
+  lead_creator_id                 Int?
+  lead_marketing_tag_collection   String?
+  lead_owner_id                   Int?
+  legal_first_name                String?
+  longitude                       String?                        @default("NULL")
+  marketing_callable              Boolean?                       @default(true)
+  marketing_disqual_reason_id     Int?
+  marketing_emailble              Boolean?                       @default(true)
+  marketing_qualified             Boolean                        @default(true)
+  marketing_textable              Boolean?                       @default(true)
+  middle_name                     String?
+  notification_preference_call    Boolean?
+  notification_preference_email   Boolean?
+  notification_preference_text    Boolean?
+  phone_cell                      String?                        @unique
+  phone_home                      String?
+  stage                           Lead_stage                     @default(New)
+  state_abbr                      String?
+  suffix                          String?
+  test_lead                       Boolean                        @default(false)
+  zip                             String?
+  EnumLeadCampaignDisqualReason   EnumLeadCampaignDisqualReason? @relation(fields: [lead_campaign_disqual_reason_id], references: [id])
+  LeadCampaign                    LeadCampaign                   @relation(fields: [lead_campaign_id], references: [id])
+  LeadConverter                   User?                          @relation("Lead_lead_converter_idToUser", fields: [lead_converter_id], references: [id])
+  LeadCreator                     User?                          @relation("Lead_lead_creator_idToUser", fields: [lead_creator_id], references: [id])
+  LeadOwner                       User?                          @relation("Lead_lead_owner_idToUser", fields: [lead_owner_id], references: [id])
+  EnumMarketingDisqualReason      EnumMarketingDisqualReason?    @relation(fields: [marketing_disqual_reason_id], references: [id])
+  Account                         Account[]
+  Assessment                      Assessment[]
+  LeadWorkingEventLog             LeadWorkingEventLog[]
+
+  @@index([lead_campaign_disqual_reason_id], name: "lead_campaign_disqual_reason")
+  @@index([lead_campaign_id], name: "lead_campaign_id")
+  @@index([lead_converter_id], name: "lead_converter_id")
+  @@index([lead_creator_id], name: "lead_creator_id")
+  @@index([lead_owner_id], name: "lead_owner_id")
+  @@index([marketing_disqual_reason_id], name: "marketing_disqual_reason")
+}
+
+model LeadCampaign {
+  active               Boolean
+  company_id           Int?
+  default_for_lead_src Boolean?                     @default(false)
+  id                   Int                          @default(autoincrement()) @id
+  lead_direction       LeadCampaign_lead_direction?
+  lead_source_id       Int
+  name                 String
+  test_lead_campaign   Boolean
+  Company              Company?                     @relation(fields: [company_id], references: [id])
+  LeadSource           LeadSource                   @relation(fields: [lead_source_id], references: [id])
+  Account              Account[]
+  Lead                 Lead[]
+
+  @@index([company_id], name: "company_id")
+  @@index([lead_source_id], name: "lead_source_id")
+}
+
+model LeadMarketingTag {
+  description String?
+  id          Int     @default(autoincrement()) @id
+  name        String
+}
+
+model LeadSource {
+  abbr             String
+  active           Boolean
+  id               Int            @default(autoincrement()) @id
+  name             String
+  test_lead_source Boolean
+  type             String?
+  LeadCampaign     LeadCampaign[]
+}
+
+model LeadWorkingEventLog {
+  comm_type_id              Int
+  event_timestamp           DateTime                  @default(dbgenerated())
+  id                        Int                       @default(autoincrement()) @id
+  lead_id                   Int
+  lwe_dispo_id              Int
+  lwe_log_creator_id        Int
+  notes                     String?
+  test_log_entry            Boolean                   @default(false)
+  EnumCommunicationType     EnumCommunicationType     @relation(fields: [comm_type_id], references: [id])
+  Lead                      Lead                      @relation(fields: [lead_id], references: [id])
+  EnumLeadWorkingEventDispo EnumLeadWorkingEventDispo @relation(fields: [lwe_dispo_id], references: [id])
+  User                      User                      @relation(fields: [lwe_log_creator_id], references: [id])
+
+  @@index([comm_type_id], name: "comm_type_id")
+  @@index([lead_id], name: "lead_id")
+  @@index([lwe_dispo_id], name: "lwe_dispo_id")
+  @@index([lwe_log_creator_id], name: "lwe_log_creator_id")
+}
+
+model Location {
+  address_one                  String
+  address_two                  String?
+  ahj_id                       Int?
+  assessment_id                Int?
+  building_type                Location_building_type?
+  city                         String
+  gate_code                    String?
+  HOA                          Boolean?
+  id                           Int                           @default(autoincrement()) @id
+  latitude                     Float?
+  longitude                    Float?
+  square_feet                  Int?
+  state_abbr                   String
+  stories                      Int?
+  test_location                Boolean
+  year_built                   Int?
+  zip                          String
+  zzz___AssessmentAnswer___old zzz___AssessmentAnswer___old? @relation(fields: [assessment_id], references: [id])
+  Account                      Account[]
+  Contact                      Contact[]
+
+  @@index([assessment_id], name: "assessment_id")
+}
+
+model Office {
+  address_one   String
+  address_two   String?
+  city          String
+  has_warehouse Boolean
+  id            Int         @default(autoincrement()) @id
+  latitude      String?
+  longitude     String?
+  name          String
+  state_abbr    String
+  test_office   Boolean
+  zip           String
+  SalesTeam     SalesTeam[]
+}
+
+model Opportunity {
+  agreement_approval_step              Int?
+  amended_from_id                      Int?
+  creator_id                           Int
+  credit_tier                          Opportunity_credit_tier?
+  id                                   Int                                         @default(autoincrement()) @id
+  presentation_appointment_stage       Opportunity_presentation_appointment_stage?
+  products_id                          String?
+  solar_design_steps                   Opportunity_solar_design_steps?
+  stage                                Opportunity_stage?
+  status                               Opportunity_status                          @default(Active)
+  total_amount                         Int?
+  updated_by_id                        Int?
+  EnumAgreementApprovalStep            EnumAgreementApprovalStep?                  @relation(fields: [agreement_approval_step], references: [id])
+  Opportunity                          Opportunity?                                @relation("OpportunityToOpportunity_amended_from_id", fields: [amended_from_id], references: [id])
+  User_Opportunity_creator_idToUser    User                                        @relation("Opportunity_creator_idToUser", fields: [creator_id], references: [id])
+  User_Opportunity_updated_by_idToUser User?                                       @relation("Opportunity_updated_by_idToUser", fields: [updated_by_id], references: [id])
+  other_Opportunity                    Opportunity[]                               @relation("OpportunityToOpportunity_amended_from_id")
+  PresentationAppointment              PresentationAppointment[]
+
+  @@index([amended_from_id], name: "amended_from_id")
+  @@index([creator_id], name: "creator_id")
+  @@index([agreement_approval_step], name: "purchase_agreement_stage")
+  @@index([updated_by_id], name: "updated_by_id")
+}
+
+model OpportunityProduct {
+  active              Boolean
+  amps                String?
+  battery_energy_kw   String?
+  battery_power_kw    String?
+  battery_size_kw     String?
+  color               String?
+  date_added          String?
+  date_updated        String?
+  description         String?
+  energy              String?
+  id                  Int                     @default(autoincrement()) @id
+  info_card_link      String?
+  inventory_id        String?
+  inverter_monitoring String?
+  inverter_size_kw    String?
+  manufacturer        String?
+  marketing_matrix    Int?
+  model_number        String
+  name                String
+  power               String?
+  type                OpportunityProduct_type
+  type_detail         String?
+  volts               String?
+  warranty_info       String?
+  watts               String?
+  watts_ptc           String?
+}
+
+model PresentationAppointment {
+  appointment_datetime                                                                            DateTime
+  created_by                                                                                      Int
+  dispositioner_id                                                                                Int?
+  id                                                                                              Int                                    @default(autoincrement()) @id
+  is_reschedule                                                                                   Boolean
+  note                                                                                            String?
+  opportunity_id                                                                                  Int?
+  presentation_dispo_id                                                                           Int                                    @default(1)
+  presented_type                                                                                  PresentationAppointment_presented_type @default(In_Person)
+  presenter_id                                                                                    Int
+  rescheduled_by                                                                                  Int?
+  rescheduled_from                                                                                Int?
+  rescheduled_to                                                                                  Int?
+  User_PresentationAppointment_created_byToUser                                                   User                                   @relation("PresentationAppointment_created_byToUser", fields: [created_by], references: [id])
+  User_PresentationAppointment_dispositioner_idToUser                                             User?                                  @relation("PresentationAppointment_dispositioner_idToUser", fields: [dispositioner_id], references: [id])
+  Opportunity                                                                                     Opportunity?                           @relation(fields: [opportunity_id], references: [id])
+  EnumPresentationResultDispo                                                                     EnumPresentationResultDispo            @relation(fields: [presentation_dispo_id], references: [id])
+  User_PresentationAppointment_presenter_idToUser                                                 User                                   @relation("PresentationAppointment_presenter_idToUser", fields: [presenter_id], references: [id])
+  User_PresentationAppointment_rescheduled_byToUser                                               User?                                  @relation("PresentationAppointment_rescheduled_byToUser", fields: [rescheduled_by], references: [id])
+  PresentationAppointment_PresentationAppointmentToPresentationAppointment_rescheduled_from       PresentationAppointment?               @relation("PresentationAppointmentToPresentationAppointment_rescheduled_from", fields: [rescheduled_from], references: [id])
+  PresentationAppointment_PresentationAppointmentToPresentationAppointment_rescheduled_to         PresentationAppointment?               @relation("PresentationAppointmentToPresentationAppointment_rescheduled_to", fields: [rescheduled_to], references: [id])
+  other_PresentationAppointment_PresentationAppointmentToPresentationAppointment_rescheduled_from PresentationAppointment[]              @relation("PresentationAppointmentToPresentationAppointment_rescheduled_from")
+  other_PresentationAppointment_PresentationAppointmentToPresentationAppointment_rescheduled_to   PresentationAppointment[]              @relation("PresentationAppointmentToPresentationAppointment_rescheduled_to")
+
+  @@index([created_by], name: "created_by")
+  @@index([dispositioner_id], name: "dispositioner_id")
+  @@index([opportunity_id], name: "opportunity_id")
+  @@index([presentation_dispo_id], name: "presentation_dispo_id")
+  @@index([presenter_id], name: "presenter_id")
+  @@index([rescheduled_by], name: "rescheduled_by")
+  @@index([rescheduled_from], name: "rescheduled_from")
+  @@index([rescheduled_to], name: "rescheduled_to")
+}
+
+model Role {
+  default_access String?
+  id             Int     @default(autoincrement()) @id
+  name           String
+  test_role      Boolean
+  User           User[]
+}
+
+model SalesTeam {
+  active                                Boolean
+  avatar_link                           String?
+  child_team_id                         Int?
+  id                                    Int     @default(autoincrement()) @id
+  name                                  String  @unique
+  office_id                             Int
+  parent_team_id                        Int?
+  team_lead_one_id                      Int?
+  team_lead_two_id                      Int?
+  test_sales_team                       Boolean
+  type                                  String
+  Office                                Office  @relation(fields: [office_id], references: [id])
+  User_SalesTeam_team_lead_one_idToUser User?   @relation("SalesTeam_team_lead_one_idToUser", fields: [team_lead_one_id], references: [id])
+  User_SalesTeamToUser_team_id          User[]  @relation("SalesTeamToUser_team_id")
+
+  @@index([office_id], name: "office_id")
+  @@index([team_lead_one_id], name: "team_lead_one_id")
+}
+
+model SmartReportSnapshot {
+  id             Int @default(autoincrement()) @id
+  opportunity_id Int
+}
+
+model Task {
+  assigned_to_group               Int?
+  assigned_to_id                  Int?
+  complete                        Boolean       @default(false)
+  completed_by_id                 Int?
+  completed_date                  DateTime?
+  creator_id                      Int?
+  date_updated                    DateTime?
+  due_date                        DateTime
+  id                              Int           @default(autoincrement()) @id
+  note_content                    String
+  priority                        Task_priority
+  type_id                         Int
+  updated_by_id                   Int?
+  Group                           Group?        @relation(fields: [assigned_to_group], references: [id])
+  User_Task_assigned_to_idToUser  User?         @relation("Task_assigned_to_idToUser", fields: [assigned_to_id], references: [id])
+  User_Task_completed_by_idToUser User?         @relation("Task_completed_by_idToUser", fields: [completed_by_id], references: [id])
+  User_Task_creator_idToUser      User?         @relation("Task_creator_idToUser", fields: [creator_id], references: [id])
+  EnumTaskType                    EnumTaskType  @relation(fields: [type_id], references: [id])
+  User_Task_updated_by_idToUser   User?         @relation("Task_updated_by_idToUser", fields: [updated_by_id], references: [id])
+
+  @@index([assigned_to_group], name: "assigned_to_group")
+  @@index([assigned_to_id], name: "assigned_to_id")
+  @@index([completed_by_id], name: "completed_by_id")
+  @@index([creator_id], name: "creator_id")
+  @@index([type_id], name: "type_id")
+  @@index([updated_by_id], name: "updated_by_id")
+}
+
+model TMY3Baseline {
+  area           String?
+  id             Int     @default(autoincrement()) @id
+  month_baseline String?
+  year_total     String?
+}
+
+// The underlying table does not contain a unique identifier and can therefore currently not be handled.
+// model tmy3_data {
+  // area     String?
+  // day      Int?
+  // hour     Int?
+  // id       Int?
+  // kw_usage Float?
+  // month    Int?
+// }
+
+model User {
+  access                                                                     String?
+  address_one                                                                String?
+  address_two                                                                String?
+  avatar_link                                                                String?
+  city                                                                       String?
+  company_id                                                                 Int
+  created_by                                                                 Int?
+  email_nerd                                                                 String                         @unique
+  email_personal                                                             String
+  employment_status                                                          Boolean
+  entity_type                                                                String?
+  first_name                                                                 String
+  id                                                                         Int                            @default(autoincrement()) @id
+  last_name                                                                  String
+  payroll_id                                                                 Int?
+  phone_cell                                                                 String
+  phone_cell_carrier                                                         String?
+  phone_home                                                                 String?
+  preferred_first_name                                                       String?
+  referred_by                                                                Int?
+  role_id                                                                    Int
+  security_pin                                                               Int?
+  state_abbr                                                                 String?
+  suffix                                                                     String?
+  team_id                                                                    Int
+  test_user                                                                  Boolean
+  third_party_ids                                                            String?
+  zip                                                                        String?
+  Company                                                                    Company                        @relation(fields: [company_id], references: [id])
+  Role                                                                       Role                           @relation(fields: [role_id], references: [id])
+  SalesTeam_SalesTeamToUser_team_id                                          SalesTeam                      @relation("SalesTeamToUser_team_id", fields: [team_id], references: [id])
+  Account_Account_account_creator_idToUser                                   Account[]                      @relation("Account_account_creator_idToUser")
+  Account_Account_advisor_idToUser                                           Account[]                      @relation("Account_advisor_idToUser")
+  Account_Account_lead_creator_idToUser                                      Account[]                      @relation("Account_lead_creator_idToUser")
+  AccountNote                                                                AccountNote[]
+  Assessment                                                                 Assessment[]
+  ContactCommunicationLog                                                    ContactCommunicationLog[]
+  Lead_Lead_lead_converter_idToUser                                          Lead[]                         @relation("Lead_lead_converter_idToUser")
+  Lead_Lead_lead_creator_idToUser                                            Lead[]                         @relation("Lead_lead_creator_idToUser")
+  Lead_Lead_lead_owner_idToUser                                              Lead[]                         @relation("Lead_lead_owner_idToUser")
+  LeadWorkingEventLog                                                        LeadWorkingEventLog[]
+  Opportunity_Opportunity_creator_idToUser                                   Opportunity[]                  @relation("Opportunity_creator_idToUser")
+  Opportunity_Opportunity_updated_by_idToUser                                Opportunity[]                  @relation("Opportunity_updated_by_idToUser")
+  PresentationAppointment_PresentationAppointment_created_byToUser           PresentationAppointment[]      @relation("PresentationAppointment_created_byToUser")
+  PresentationAppointment_PresentationAppointment_dispositioner_idToUser     PresentationAppointment[]      @relation("PresentationAppointment_dispositioner_idToUser")
+  PresentationAppointment_PresentationAppointment_presenter_idToUser         PresentationAppointment[]      @relation("PresentationAppointment_presenter_idToUser")
+  PresentationAppointment_PresentationAppointment_rescheduled_byToUser       PresentationAppointment[]      @relation("PresentationAppointment_rescheduled_byToUser")
+  SalesTeam_SalesTeam_team_lead_one_idToUser                                 SalesTeam[]                    @relation("SalesTeam_team_lead_one_idToUser")
+  Task_Task_assigned_to_idToUser                                             Task[]                         @relation("Task_assigned_to_idToUser")
+  Task_Task_completed_by_idToUser                                            Task[]                         @relation("Task_completed_by_idToUser")
+  Task_Task_creator_idToUser                                                 Task[]                         @relation("Task_creator_idToUser")
+  Task_Task_updated_by_idToUser                                              Task[]                         @relation("Task_updated_by_idToUser")
+  zzz___AssessmentAnswer___old_UserTozzz___AssessmentAnswer___old_creator_id zzz___AssessmentAnswer___old[] @relation("UserTozzz___AssessmentAnswer___old_creator_id")
+  zzz___AssessmentAnswer___old_UserTozzz___AssessmentAnswer___old_updater_id zzz___AssessmentAnswer___old[] @relation("UserTozzz___AssessmentAnswer___old_updater_id")
+
+  @@index([company_id], name: "company_id")
+  @@index([role_id], name: "role_id")
+  @@index([team_id], name: "team_id")
+}
+
+model UtilityCompany {
+  abbreviation                   String
+  contact_name                   String?
+  dso_estimate                   String?
+  id                             Int                            @default(autoincrement()) @id
+  inked_interconnection_required Boolean?
+  interconnection_online         Boolean?
+  max_residential_system_size    Boolean?
+  name                           String
+  net_metering                   Boolean
+  phone                          String?
+  preferred_installer_exists     Boolean?
+  preferred_installer_on_list    Boolean?
+  rebate_program                 Boolean?
+  rebate_program_id              String?
+  solar_specific_plan            Boolean?
+  state                          String
+  type                           UtilityCompany_type
+  zzz___AssessmentAnswer___old   zzz___AssessmentAnswer___old[]
+}
+
+model UtilityRatePlan {
+  account_fee          String?
+  active               Boolean?
+  buy_back_rate        String?
+  demand_rate_one      String?
+  demand_rate_three    String?
+  demand_rate_two      String?
+  demand_tier          String?
+  id                   Int      @default(autoincrement()) @id
+  kwh_add_fee          String?
+  minimum_bill         String?
+  peak_end_hour        String?
+  peak_start_hour      String?
+  peak_two_end_hour    String?
+  peak_two_start_hour  String?
+  post_solar_default   Boolean?
+  pre_solar_default    Boolean?
+  rate_plan            String?
+  solar_eligible       String?
+  solar_kw_fee         String?
+  state                String?
+  superpeak_end_hour   String?
+  superpeak_start_hour String?
+  tax                  String?
+  tier_one_ceiling     String?
+  tier_one_offpeak     String?
+  tier_one_peak        String?
+  tier_one_superpeak   String?
+  tier_three_offpeak   String?
+  tier_three_peak      String?
+  tier_three_superpeak String?
+  tier_two_ceiling     String?
+  tier_two_offpeak     String?
+  tier_two_peak        String?
+  tier_two_superpeak   String?
+  utility_abbr         String
+  utility_name         String?
+}
+
+model UtilityRebateProgram {
+  active                Boolean?
+  date_added_by_company DateTime?
+  date_expires          DateTime?
+  description           String?
+  id                    Int                                @default(autoincrement()) @id
+  product_id            Int?
+  product_type          UtilityRebateProgram_product_type?
+}
+
+model UtilityRegion {
+  baseline_summer          String?
+  baseline_summer_electric String?
+  baseline_winter          String?
+  baseline_winter_electric String?
+  id                       Int     @default(autoincrement()) @id
+  region_label             String?
+  utility_company          String?
+  utility_name             String?
+}
+
+model zzz___AssessmentAnswer___old {
+  ac_unit_age_year                                   Int?
+  ac_unit_condition                                  zzz___AssessmentAnswer___old_ac_unit_condition?
+  ac_unit_quantity                                   Int?
+  ac_unit_type                                       String?
+  asbestos_present                                   Boolean?
+  backup_power_interest                              Boolean?
+  creator_id                                         Int
+  date_created                                       DateTime?
+  date_updated                                       DateTime?
+  electric_vehicle                                   Boolean?
+  ev_next_five_year_delta_est                        zzz___AssessmentAnswer___old_ev_next_five_year_delta_est?
+  existing_air_seal                                  Boolean?
+  existing_air_seal_age                              Int?
+  existing_air_seal_condition                        zzz___AssessmentAnswer___old_existing_air_seal_condition?
+  existing_battery                                   Boolean?
+  existing_battery_age_year                          Int?
+  existing_battery_quantity                          Int?
+  existing_battery_type                              String?
+  existing_consumption_monitoring                    Boolean?
+  existing_consumption_monitoring_detail             String?
+  existing_dryer                                     Boolean?
+  existing_dryer_age_year                            Int?
+  existing_dryer_condition                           zzz___AssessmentAnswer___old_existing_dryer_condition?
+  existing_dryer_type                                zzz___AssessmentAnswer___old_existing_dryer_type?
+  existing_duct_seal                                 Boolean?
+  existing_duct_seal_condition                       zzz___AssessmentAnswer___old_existing_duct_seal_condition?
+  existing_duct_seal_year                            Int?
+  existing_ev_charger                                Boolean?
+  existing_ev_charger_age_year                       Int?
+  existing_ev_charger_condition                      zzz___AssessmentAnswer___old_existing_ev_charger_condition?
+  existing_ev_charger_detail                         String?
+  existing_ev_charger_type                           String?
+  existing_insulation_condition                      zzz___AssessmentAnswer___old_existing_insulation_condition?
+  existing_insulation_year                           Int?
+  existing_led_amount                                zzz___AssessmentAnswer___old_existing_led_amount?
+  existing_ozone_system                              Boolean?
+  existing_pearl_certification                       Boolean?
+  existing_pearl_cert_detail                         String?
+  existing_pool_remote_features                      Boolean?
+  existing_pool_variable_speed_pump                  Boolean?
+  existing_production_monitoring                     Boolean?
+  existing_production_monitoring_detail              String?
+  existing_solar                                     Boolean?
+  existing_solar_condition                           zzz___AssessmentAnswer___old_existing_solar_condition?
+  existing_solar_cover_utility_bill                  Boolean?
+  existing_solar_detail                              String?
+  existing_solar_image                               String?
+  existing_solar_install_or_purchase                 zzz___AssessmentAnswer___old_existing_solar_install_or_purchase?
+  existing_solar_install_year                        Int?
+  existing_solar_monitoring_type                     String?
+  existing_solar_own_lease_ppa                       zzz___AssessmentAnswer___old_existing_solar_own_lease_ppa?
+  existing_solar_size_kw                             Int?
+  existing_thermostat_type                           zzz___AssessmentAnswer___old_existing_thermostat_type?
+  has_pool                                           Boolean?
+  has_wifi                                           Boolean?
+  hoa                                                Boolean?
+  home_built_year                                    Int?
+  home_ownership                                     Boolean?
+  home_stories_tall                                  Int?
+  id                                                 Int                                                              @default(autoincrement()) @id
+  indoor_air_quality_important                       Boolean?
+  insulation_ee_standards_past_five_yrs              Boolean?
+  lead_id                                            Int?
+  lighting_efficiency                                zzz___AssessmentAnswer___old_lighting_efficiency?
+  living_environment_sealed                          Boolean?
+  moving_in_next_12month                             Int?
+  opportunity_id                                     Int?
+  pay_federal_taxes                                  Int?
+  roof_age_year                                      Int?
+  roof_condition                                     zzz___AssessmentAnswer___old_roof_condition?
+  roof_flat_or_pitch                                 zzz___AssessmentAnswer___old_roof_flat_or_pitch?
+  roof_material                                      zzz___AssessmentAnswer___old_roof_material?
+  square_footage_customer_est                        Int?
+  test_assessment                                    Boolean?
+  thermostat_quantity                                Int?
+  thermostat_summer_avg_estimate                     Int?
+  thermostat_winter_avg_estimate                     Int?
+  updater_id                                         Int?
+  utility_bill_avg_cost_annual                       Int?
+  utility_bill_avg_cost_month                        Int?
+  utility_bill_avg_kWh_annual                        Int?
+  utility_bill_avg_kWh_month                         Int?
+  utility_bill_cost_months_detail                    String?
+  utility_bill_graph_img                             String?
+  utility_bill_img                                   String?
+  utility_bill_kWh_months_detail                     String?
+  utility_bill_other_img                             String?
+  utility_company                                    Int?
+  utility_rate_plan                                  Int?
+  water_heater_age_year                              Int?
+  water_heater_condition                             zzz___AssessmentAnswer___old_water_heater_condition?
+  water_heater_type                                  zzz___AssessmentAnswer___old_water_heater_type?
+  User_UserTozzz___AssessmentAnswer___old_creator_id User                                                             @relation("UserTozzz___AssessmentAnswer___old_creator_id", fields: [creator_id], references: [id])
+  User_UserTozzz___AssessmentAnswer___old_updater_id User?                                                            @relation("UserTozzz___AssessmentAnswer___old_updater_id", fields: [updater_id], references: [id])
+  UtilityCompany                                     UtilityCompany?                                                  @relation(fields: [utility_company], references: [id])
+  Location                                           Location[]
+
+  @@index([creator_id], name: "creator_id")
+  @@index([updater_id], name: "updater_id")
+  @@index([utility_company], name: "utility_company")
+  @@map("zzz - AssessmentAnswer - old")
+}
+
+model zzz___AssessmentQuestion___old {
+  active            Boolean  @default(true)
+  description       String?
+  follow_up         Boolean?
+  id                Int      @default(autoincrement()) @id
+  primary_tier      Boolean?
+  question          String
+  related_info_text String?
+  related_products  String?
+  secondary_tier    Boolean?
+
+  @@map("zzz - AssessmentQuestion - old")
+}
+
+enum Account_stage {
+  PreQualification
+  Qualification
+  Opportunity
+  Project
+  Service
+}
+
+enum Account_status {
+  Active
+  Hold
+  Cancelled
+}
+
+enum Account_type {
+  Residential
+  Commercial
+}
+
+enum AccountNote_type {
+  Update
+  Redesign
+}
+
+enum ContactCommunicationLog_direction {
+  Inbound
+  Outbound
+}
+
+enum Inventory_type {
+  Solar_Spec_ @map("Solar Spec.")
+  Monitoring
+}
+
+enum Lead_stage {
+  New
+  Working
+  Converted
+  Lost
+}
+
+enum LeadCampaign_lead_direction {
+  Inbound
+  Outbound
+}
+
+enum Location_building_type {
+  Single_Family @map("Single Family")
+  Manufactured
+  Condo
+  Duplex
+  Townhome
+  Tiny_Home @map("Tiny Home")
+  Other
+}
+
+enum Opportunity_credit_tier {
+  Tier_A @map("Tier A")
+  Tier_B @map("Tier B")
+  Tier_C @map("Tier C")
+  Tier_D @map("Tier D")
+}
+
+enum Opportunity_presentation_appointment_stage {
+  Unscheduled
+  Scheduled
+  Needs_to_be_Rescheduled @map("Needs to be Rescheduled")
+  Rescheduled
+  Complete
+  Incomplete
+  Cancelled
+}
+
+enum Opportunity_solar_design_steps {
+  Requested
+  In_Progress @map("In Progress")
+  Complete
+  Re_Deisgn_Requested @map("Re-Deisgn Requested")
+  Re_Design_Complete @map("Re-Design Complete")
+  Cancelled
+}
+
+enum Opportunity_stage {
+  Assessment
+  Presentation_Appointment @map("Presentation Appointment")
+  Purchase_Agreement @map("Purchase Agreement")
+}
+
+enum Opportunity_status {
+  Active
+  Hold
+  Closed___Won @map("Closed - Won")
+  Closed___Lost @map("Closed - Lost")
+  Cancelled
+}
+
+enum OpportunityProduct_type {
+  Production
+  Reduction
+  Storage
+  Monitoring
+  Service
+}
+
+enum PresentationAppointment_presented_type {
+  Online
+  In_Person @map("In Person")
+}
+
+enum Task_priority {
+  Low
+  Medium
+  High
+  Critical
+}
+
+enum UtilityCompany_type {
+  Electric
+  Electric_and_Gas @map("Electric and Gas")
+  Electric_and_Gas_and_Water @map("Electric and Gas and Water")
+  Electric_and_Water @map("Electric and Water")
+}
+
+enum UtilityRebateProgram_product_type {
+  PV
+  Reduction
+}
+
+enum zzz___AssessmentAnswer___old_ac_unit_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_ac_unit_condition")
+}
+
+enum zzz___AssessmentAnswer___old_ev_next_five_year_delta_est {
+  Going_up @map("Going up")
+  Staying_same @map("Staying same")
+  Going_down @map("Going down")
+
+   @@map("zzz - AssessmentAnswer - old_ev_next_five_year_delta_est")
+}
+
+enum zzz___AssessmentAnswer___old_existing_air_seal_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_existing_air_seal_condition")
+}
+
+enum zzz___AssessmentAnswer___old_existing_dryer_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_existing_dryer_condition")
+}
+
+enum zzz___AssessmentAnswer___old_existing_dryer_type {
+  Gas
+  Electric
+
+   @@map("zzz - AssessmentAnswer - old_existing_dryer_type")
+}
+
+enum zzz___AssessmentAnswer___old_existing_duct_seal_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_existing_duct_seal_condition")
+}
+
+enum zzz___AssessmentAnswer___old_existing_ev_charger_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_existing_ev_charger_condition")
+}
+
+enum zzz___AssessmentAnswer___old_existing_insulation_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_existing_insulation_condition")
+}
+
+enum zzz___AssessmentAnswer___old_existing_led_amount {
+  None
+  Some
+  Most
+  All
+
+   @@map("zzz - AssessmentAnswer - old_existing_led_amount")
+}
+
+enum zzz___AssessmentAnswer___old_existing_solar_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_existing_solar_condition")
+}
+
+enum zzz___AssessmentAnswer___old_existing_solar_install_or_purchase {
+  Installed_by_customer @map("Installed by customer")
+  Came_with_home @map("Came with home")
+
+   @@map("zzz - AssessmentAnswer - old_existing_solar_install_or_purchase")
+}
+
+enum zzz___AssessmentAnswer___old_existing_solar_own_lease_ppa {
+  Own
+  Lease
+  PPA
+
+   @@map("zzz - AssessmentAnswer - old_existing_solar_own_lease_ppa")
+}
+
+enum zzz___AssessmentAnswer___old_existing_thermostat_type {
+  Dial
+  Programmable
+  Smart
+
+   @@map("zzz - AssessmentAnswer - old_existing_thermostat_type")
+}
+
+enum zzz___AssessmentAnswer___old_lighting_efficiency {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_lighting_efficiency")
+}
+
+enum zzz___AssessmentAnswer___old_roof_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_roof_condition")
+}
+
+enum zzz___AssessmentAnswer___old_roof_flat_or_pitch {
+  Flat
+  Pitched
+
+   @@map("zzz - AssessmentAnswer - old_roof_flat_or_pitch")
+}
+
+enum zzz___AssessmentAnswer___old_roof_material {
+  Shingle
+  Spanish_Tile @map("Spanish Tile")
+  Concrete
+  Wood
+  Metal
+  Foam
+  Asphalt
+
+   @@map("zzz - AssessmentAnswer - old_roof_material")
+}
+
+enum zzz___AssessmentAnswer___old_water_heater_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_water_heater_condition")
+}
+
+enum zzz___AssessmentAnswer___old_water_heater_type {
+  Gas
+  Electric
+  Tankless
+
+   @@map("zzz - AssessmentAnswer - old_water_heater_type")
+}

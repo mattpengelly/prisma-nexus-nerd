@@ -1,0 +1,13 @@
+Field names in Prisma Schema needing changes after introspect:
+____________________________________________________________________________________________________________________________
+|       Table        |                             Generated Field                                   |   New Field name    |
+----------------------------------------------------------------------------------------------------------------------------
+| Lead               | User_Lead_lead_converter_idToUser                                             | LeadConverter       |
+| Lead               | User_Lead_lead_creator_idToUser                                               | LeadCreator         |
+| Lead               | User_Lead_lead_owner_idToUser                                                 | LeadOwner           |
+| AssessmentPhrasing | AssessmentQuestion_AssessmentPhrasing_question_idToAssessmentQuestion         | AssessmentQuestion  |
+| AssessmentPhrasing | AssessmentAnswer                                                              | AssessmentAnswers   |
+| AssessmentQuestion | AssessmentPhrasing_AssessmentPhrasingToAssessmentQuestion_current_phrasing_id | AssessmentPhrasing  |
+| AssessmentQuestion | AssessmentAnswer                                                              | AssessmentAnswers   |
+| AssessmentQuestion | AssessmentPhrasing_AssessmentPhrasing_question_idToAssessmentQuestion         | AssessmentPhrasings |
+

@@ -1,0 +1,32 @@
+{
+  "name": "nerd-prisma-nexus",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon -e js,graphql -x node src",
+    "start": "node src",
+    "generate:prisma": "prisma generate",
+    "generate:nexus": "cross-env NODE_ENV=development ts-node --transpile-only path/to/schema/module",
+    "generate": "npm -s run generate:prisma && npm -s run generate:nexus",
+    "postinstall": "npx prisma generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@prisma/cli": "^2.4.1"
+  },
+  "dependencies": {
+    "@nexus/schema": "^0.13.1",
+    "@prisma/client": "^2.4.1",
+    "@types/node-fetch": "^2.5.5",
+    "graphql": "^15.0.0",
+    "graphql-iso-date": "^3.6.1",
+    "graphql-yoga": "^1.18.3",
+    "nexus": "^0.12.0",
+    "nexus-prisma": "^0.12.0",
+    "opencage-api-client": "^0.7.1"
+  }
+}
