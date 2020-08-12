@@ -8,29 +8,29 @@ datasource db {
 }
 
 model Access {
-  abbr        String?
   id          Int     @default(autoincrement()) @id
   name        String
+  abbr        String?
   test_access Boolean
 }
 
 model Account {
-  account_creator_id                            Int
+  id                                            Int            @default(autoincrement()) @id
   acct_num                                      String         @unique
-  additional_location                           String?
+  status                                        Account_status @default(Active)
   advisor_id                                    Int
+  lead_creator_id                               Int
   contact_primary_id                            Int
   contact_secondary_id                          Int?
-  from_lead_id                                  Int?
-  id                                            Int            @default(autoincrement()) @id
-  lead_campaign_id                              Int?
-  lead_creator_id                               Int
   location_id                                   Int
-  organization_id                               Int            @default(1)
-  stage                                         Account_stage
-  status                                        Account_status @default(Active)
-  test_acct                                     Boolean
+  from_lead_id                                  Int?
   type                                          Account_type   @default(Residential)
+  organization_id                               Int            @default(1)
+  test_acct                                     Boolean
+  additional_location                           String?
+  stage                                         Account_stage
+  lead_campaign_id                              Int?
+  account_creator_id                            Int
   User_Account_account_creator_idToUser         User           @relation("Account_account_creator_idToUser", fields: [account_creator_id], references: [id])
   User_Account_advisor_idToUser                 User           @relation("Account_advisor_idToUser", fields: [advisor_id], references: [id])
   Contact_Account_contact_primary_idToContact   Contact        @relation("Account_contact_primary_idToContact", fields: [contact_primary_id], references: [id])
@@ -54,29 +54,29 @@ model Account {
 }
 
 model AccountMarketingTag {
-  description String?
   id          Int     @default(autoincrement()) @id
   name        String
+  description String?
 }
 
 model AccountNote {
-  added_by_id   Int
   id            Int              @default(autoincrement()) @id
-  important_pin Boolean
-  note_content  String
   type          AccountNote_type
+  note_content  String
+  added_by_id   Int
+  important_pin Boolean
   User          User             @relation(fields: [added_by_id], references: [id])
 
   @@index([added_by_id], name: "added_by_id")
 }
 
 model Assessment {
-  account_id       Int?
-  assessor_id      Int
-  date_assessed    DateTime           @default(now())
-  id               Int                @default(autoincrement()) @unique
-  lead_campaign_id Int?
+  id               Int                @default(autoincrement()) @id
   lead_id          Int?
+  account_id       Int?
+  date_assessed    DateTime           @default(now())
+  assessor_id      Int
+  lead_campaign_id Int?
   Account          Account?           @relation(fields: [account_id], references: [id])
   User             User               @relation(fields: [assessor_id], references: [id])
   Lead             Lead?              @relation(fields: [lead_id], references: [id])
@@ -88,11 +88,11 @@ model Assessment {
 }
 
 model AssessmentAnswer {
-  answer             String?
-  assessment_id      Int
   id                 Int                @default(autoincrement()) @id
-  phrasing_id        Int
+  assessment_id      Int
   question_id        Int
+  phrasing_id        Int
+  answer             String?
   Assessment         Assessment         @relation(fields: [assessment_id], references: [id])
   AssessmentPhrasing AssessmentPhrasing @relation(fields: [phrasing_id], references: [id])
   AssessmentQuestion AssessmentQuestion @relation(fields: [question_id], references: [id])
@@ -104,35 +104,35 @@ model AssessmentAnswer {
 
 model AssessmentPhrasing {
   id                                                                            Int                 @default(autoincrement()) @id
-  phrasing                                                                      String?
   question_id                                                                   Int
+  phrasing                                                                      String?
   related_info                                                                  String?
-  AssessmentQuestion                                                            AssessmentQuestion  @relation("AssessmentPhrasing_question_idToAssessmentQuestion", fields: [question_id], references: [id])
-  AssessmentAnswers                                                             AssessmentAnswer[]
+  AssessmentQuestion_AssessmentPhrasing_question_idToAssessmentQuestion         AssessmentQuestion  @relation("AssessmentPhrasing_question_idToAssessmentQuestion", fields: [question_id], references: [id])
+  AssessmentAnswer                                                              AssessmentAnswer[]
   AssessmentQuestion_AssessmentPhrasingToAssessmentQuestion_current_phrasing_id AssessmentQuestion? @relation("AssessmentPhrasingToAssessmentQuestion_current_phrasing_id")
 
   @@index([question_id], name: "question_id")
 }
 
 model AssessmentQuestion {
-  answer_type           String?
-  category              String?
-  current_phrasing_id   Int?                   @unique
-  enum                  String?
-  id                    Int                    @default(autoincrement()) @id
-  info_type             String?
-  question              String?
-  required              Boolean?
-  AssessmentPhrasing    AssessmentPhrasing?    @relation("AssessmentPhrasingToAssessmentQuestion_current_phrasing_id", fields: [current_phrasing_id], references: [id])
-  AssessmentAnswers     AssessmentAnswer[]
-  AssessmentPhrasings   AssessmentPhrasing[]   @relation("AssessmentPhrasing_question_idToAssessmentQuestion")
-  EnumAssessmentAnswers EnumAssessmentAnswer[]
+  id                                                                            Int                    @default(autoincrement()) @id
+  question                                                                      String?
+  current_phrasing_id                                                           Int?                   @unique
+  info_type                                                                     String?
+  answer_type                                                                   String?
+  required                                                                      Boolean?
+  enum                                                                          String?
+  category                                                                      String?
+  AssessmentPhrasing_AssessmentPhrasingToAssessmentQuestion_current_phrasing_id AssessmentPhrasing?    @relation("AssessmentPhrasingToAssessmentQuestion_current_phrasing_id", fields: [current_phrasing_id], references: [id])
+  AssessmentAnswer                                                              AssessmentAnswer[]
+  AssessmentPhrasing_AssessmentPhrasing_question_idToAssessmentQuestion         AssessmentPhrasing[]   @relation("AssessmentPhrasing_question_idToAssessmentQuestion")
+  EnumAssessmentAnswer                                                          EnumAssessmentAnswer[]
 }
 
 model Company {
-  active        Boolean
   id            Int            @default(autoincrement()) @id
   name          String
+  active        Boolean
   parent_co     Int?
   test_co       Boolean
   Company       Company?       @relation("CompanyToCompany_parent_co", fields: [parent_co], references: [id])
@@ -145,33 +145,33 @@ model Company {
 }
 
 model Contact {
-  additional_location                           String?
-  email_one                                     String                         @unique
-  email_two                                     String?
-  first_name                                    String
   id                                            Int                            @default(autoincrement()) @id
-  last_name                                     String
-  lead_campaign_disqual_reason_id               Int?
+  first_name                                    String
   legal_first_name                              String?
-  marketing_callable                            Boolean?
-  marketing_disqual_reason_id                   Int?
-  marketing_emailable                           Boolean?
-  marketing_qualified                           Boolean                        @default(true)
-  marketing_tag_collection                      String?
-  marketing_textable                            Boolean?
   middle_name                                   String?
-  notification_preference_call                  Boolean?
-  notification_preference_email                 Boolean?
-  notification_preference_text                  Boolean?
+  last_name                                     String
+  suffix                                        String?
+  primary_location_id                           Int?
+  additional_location                           String?
   phone_cell                                    String                         @unique
   phone_home                                    String?
-  preferred_first_name                          String?
-  primary_location_id                           Int?
-  sales_disqual_reason_id                       Int?
-  sales_qualified                               Boolean                        @default(true)
-  spanish_speaker                               Boolean?
-  suffix                                        String?
+  email_one                                     String                         @unique
+  email_two                                     String?
   test_contact                                  Boolean
+  marketing_qualified                           Boolean                        @default(true)
+  sales_qualified                               Boolean                        @default(true)
+  marketing_callable                            Boolean?
+  marketing_textable                            Boolean?
+  marketing_emailable                           Boolean?
+  spanish_speaker                               Boolean?
+  preferred_first_name                          String?
+  marketing_tag_collection                      String?
+  notification_preference_text                  Boolean?
+  notification_preference_call                  Boolean?
+  notification_preference_email                 Boolean?
+  sales_disqual_reason_id                       Int?
+  lead_campaign_disqual_reason_id               Int?
+  marketing_disqual_reason_id                   Int?
   EnumLeadCampaignDisqualReason                 EnumLeadCampaignDisqualReason? @relation(fields: [lead_campaign_disqual_reason_id], references: [id])
   EnumMarketingDisqualReason                    EnumMarketingDisqualReason?    @relation(fields: [marketing_disqual_reason_id], references: [id])
   Location                                      Location?                      @relation(fields: [primary_location_id], references: [id])
@@ -179,23 +179,23 @@ model Contact {
   Account_Account_contact_primary_idToContact   Account[]                      @relation("Account_contact_primary_idToContact")
   Account_Account_contact_secondary_idToContact Account[]                      @relation("Account_contact_secondary_idToContact")
 
-  @@index([lead_campaign_disqual_reason_id], name: "lead_campaign_disqual_reason")
-  @@index([marketing_disqual_reason_id], name: "marketing_disqual_reason")
+  @@index([lead_campaign_disqual_reason_id], name: "lead_campaign_disqual_reason_id")
+  @@index([marketing_disqual_reason_id], name: "marketing_disqual_reason_id")
   @@index([primary_location_id], name: "primary_location_id")
-  @@index([sales_disqual_reason_id], name: "sales_disqual_reason")
+  @@index([sales_disqual_reason_id], name: "sales_disqual_reason_id")
 }
 
 model ContactCommunicationLog {
-  callback_datetime_requested DateTime?
-  callback_requested          Boolean                           @default(false)
-  contact_comm_dispo_id       Int
-  contact_comm_type_id        Int
-  date                        DateTime
-  direction                   ContactCommunicationLog_direction
   id                          Int                               @default(autoincrement()) @id
-  is_callback                 Boolean?
+  date                        DateTime
+  contact_comm_dispo_id       Int
+  callback_requested          Boolean                           @default(false)
   log_creator_id              Int
+  contact_comm_type_id        Int
   note                        String
+  direction                   ContactCommunicationLog_direction
+  callback_datetime_requested DateTime?
+  is_callback                 Boolean?
   EnumContactCommDispo        EnumContactCommDispo              @relation(fields: [contact_comm_dispo_id], references: [id])
   EnumCommunicationType       EnumCommunicationType             @relation(fields: [contact_comm_type_id], references: [id])
   User                        User                              @relation(fields: [log_creator_id], references: [id])
@@ -217,74 +217,74 @@ model EnumAgreementApprovalStep {
 }
 
 model EnumAssessmentAnswer {
-  choice             String?
-  id                 Int                 @default(autoincrement()) @unique
-  image              String?
+  id                 Int                 @default(autoincrement()) @id
   question_id        Int?
+  choice             String?
+  image              String?
   AssessmentQuestion AssessmentQuestion? @relation(fields: [question_id], references: [id])
 
   @@index([question_id], name: "question_id")
 }
 
 model EnumCommunicationType {
-  description             String?
   id                      Int                       @default(autoincrement()) @id
   name                    String
+  description             String?
   ContactCommunicationLog ContactCommunicationLog[]
   LeadWorkingEventLog     LeadWorkingEventLog[]
 }
 
 model EnumContactCommDispo {
-  description             String?
   id                      Int                       @default(autoincrement()) @id
   name                    String
+  description             String?
   ContactCommunicationLog ContactCommunicationLog[]
 }
 
 model EnumLeadCampaignDisqualReason {
-  id      Int       @default(autoincrement()) @unique
+  id      Int       @id
   name    String
   Contact Contact[]
   Lead    Lead[]
 }
 
 model EnumLeadWorkingEventDispo {
-  description         String?
   id                  Int                   @default(autoincrement()) @id
   name                String
+  description         String?
   LeadWorkingEventLog LeadWorkingEventLog[]
 }
 
 model EnumMarketingDisqualReason {
-  id      Int       @default(autoincrement()) @unique
+  id      Int       @default(autoincrement()) @id
   name    String
   Contact Contact[]
   Lead    Lead[]
 }
 
 model EnumPresentationResultDispo {
-  description             String?
   id                      Int                       @default(autoincrement()) @id
   name                    String
+  description             String?
   PresentationAppointment PresentationAppointment[]
 }
 
 model EnumSalesDisqualReason {
-  id      Int       @default(autoincrement()) @unique
+  id      Int       @default(autoincrement()) @id
   name    String
   Contact Contact[]
 }
 
 model EnumStateAbbr {
-  abbr String?
   id   Int     @default(autoincrement()) @id
+  abbr String?
   name String?
 }
 
 model EnumTaskType {
-  description String?
   id          Int     @default(autoincrement()) @id
   name        String
+  description String?
   Task        Task[]
 }
 
@@ -299,28 +299,28 @@ model FinanceLog {
 }
 
 model FinanceRatePlan {
-  active          Boolean?
+  id              Int      @default(autoincrement()) @id
+  finance_company String?
+  term_name       String?
+  term_length     String?
   apr             String?
-  base_fee        String?
-  customer_fee    String?
+  interest_only   String?
+  post_incentive  String?
+  no_incentive    String?
   dealer_points   String?
   default_rate    String?
-  finance_company String?
   finance_fee     String?
-  id              Int      @default(autoincrement()) @id
-  interest_only   String?
-  no_incentive    String?
-  post_incentive  String?
-  term_length     String?
-  term_name       String?
+  base_fee        String?
+  customer_fee    String?
+  active          Boolean?
 }
 
 model Group {
-  email       String?
   id          Int     @default(autoincrement()) @id
   name        String
-  parent_id   Int?
   type        String?
+  email       String?
+  parent_id   Int?
   Group       Group?  @relation("GroupToGroup_parent_id", fields: [parent_id], references: [id])
   other_Group Group[] @relation("GroupToGroup_parent_id")
   Task        Task[]
@@ -329,94 +329,94 @@ model Group {
 }
 
 model Inventory {
-  active              Boolean
-  battery_size_kw     String?
-  category            String
-  color               String?
-  date_added          DateTime?
-  date_updated        DateTime?
-  description         String?
-  detail              String?
   id                  Int            @default(autoincrement()) @id
-  info_card_link      String?
-  inverter_monitoring String?
-  inverter_size_kw    String?
-  manufacturer        String?
-  model_number        String?
-  name                String
-  reference_name      String?
   type                Inventory_type
+  category            String
+  name                String
+  detail              String?
+  active              Boolean
+  model_number        String?
+  manufacturer        String?
+  description         String?
+  date_added          DateTime?
   type_subtype        String?
-  volts               String?
+  reference_name      String?
+  info_card_link      String?
   warranty_card_link  String?
+  color               String?
   watts               String?
   watts_ptc           String?
+  volts               String?
+  inverter_monitoring String?
+  inverter_size_kw    String?
+  battery_size_kw     String?
+  date_updated        DateTime?
 }
 
 model Lead {
-  address_one                     String?
-  address_two                     String?
-  address_verified                Boolean                        @default(false)
-  assessment_complete             Boolean?                       @default(false)
-  city                            String?
-  email_one                       String?                        @unique
-  email_two                       String?
-  first_name                      String
-  gate_code                       String?
-  id                              Int                            @default(autoincrement()) @id
-  last_name                       String
-  latitude                        String?                        @default("NULL")
-  lead_campaign_disqual_reason_id Int?
-  lead_campaign_id                Int                            @default(4)
-  lead_converter_id               Int?
-  lead_creator_id                 Int?
-  lead_marketing_tag_collection   String?
-  lead_owner_id                   Int?
-  legal_first_name                String?
-  longitude                       String?                        @default("NULL")
-  marketing_callable              Boolean?                       @default(true)
-  marketing_disqual_reason_id     Int?
-  marketing_emailble              Boolean?                       @default(true)
-  marketing_qualified             Boolean                        @default(true)
-  marketing_textable              Boolean?                       @default(true)
-  middle_name                     String?
-  notification_preference_call    Boolean?
-  notification_preference_email   Boolean?
-  notification_preference_text    Boolean?
-  phone_cell                      String?                        @unique
-  phone_home                      String?
-  stage                           Lead_stage                     @default(New)
-  state_abbr                      String?
-  suffix                          String?
-  test_lead                       Boolean                        @default(false)
-  zip                             String?
-  EnumLeadCampaignDisqualReason   EnumLeadCampaignDisqualReason? @relation(fields: [lead_campaign_disqual_reason_id], references: [id])
-  LeadCampaign                    LeadCampaign                   @relation(fields: [lead_campaign_id], references: [id])
-  LeadConverter                   User?                          @relation("Lead_lead_converter_idToUser", fields: [lead_converter_id], references: [id])
-  LeadCreator                     User?                          @relation("Lead_lead_creator_idToUser", fields: [lead_creator_id], references: [id])
-  LeadOwner                       User?                          @relation("Lead_lead_owner_idToUser", fields: [lead_owner_id], references: [id])
-  EnumMarketingDisqualReason      EnumMarketingDisqualReason?    @relation(fields: [marketing_disqual_reason_id], references: [id])
-  Account                         Account[]
-  Assessment                      Assessment[]
-  LeadWorkingEventLog             LeadWorkingEventLog[]
+  id                                Int                            @default(autoincrement()) @id
+  first_name                        String
+  legal_first_name                  String?
+  middle_name                       String?
+  last_name                         String
+  address_one                       String?
+  suffix                            String?
+  address_two                       String?
+  city                              String?
+  state_abbr                        String?
+  zip                               String?
+  gate_code                         String?
+  latitude                          String?                        @default("NULL")
+  longitude                         String?                        @default("NULL")
+  address_verified                  Boolean                        @default(false)
+  email_one                         String?                        @unique
+  email_two                         String?
+  phone_cell                        String?                        @unique
+  phone_home                        String?
+  stage                             Lead_stage                     @default(New)
+  lead_creator_id                   Int?
+  lead_owner_id                     Int?
+  test_lead                         Boolean                        @default(false)
+  lead_campaign_id                  Int                            @default(4)
+  marketing_qualified               Boolean                        @default(true)
+  lead_marketing_tag_collection     String?
+  assessment_complete               Boolean?                       @default(false)
+  marketing_callable                Boolean?                       @default(true)
+  marketing_textable                Boolean?                       @default(true)
+  marketing_emailble                Boolean?                       @default(true)
+  notification_preference_email     Boolean?
+  notification_preference_text      Boolean?
+  notification_preference_call      Boolean?
+  lead_converter_id                 Int?
+  lead_campaign_disqual_reason_id   Int?
+  marketing_disqual_reason_id       Int?
+  EnumLeadCampaignDisqualReason     EnumLeadCampaignDisqualReason? @relation(fields: [lead_campaign_disqual_reason_id], references: [id])
+  LeadCampaign                      LeadCampaign                   @relation(fields: [lead_campaign_id], references: [id])
+  User_Lead_lead_converter_idToUser User?                          @relation("Lead_lead_converter_idToUser", fields: [lead_converter_id], references: [id])
+  User_Lead_lead_creator_idToUser   User?                          @relation("Lead_lead_creator_idToUser", fields: [lead_creator_id], references: [id])
+  User_Lead_lead_owner_idToUser     User?                          @relation("Lead_lead_owner_idToUser", fields: [lead_owner_id], references: [id])
+  EnumMarketingDisqualReason        EnumMarketingDisqualReason?    @relation(fields: [marketing_disqual_reason_id], references: [id])
+  Account                           Account[]
+  Assessment                        Assessment[]
+  LeadWorkingEventLog               LeadWorkingEventLog[]
 
-  @@index([lead_campaign_disqual_reason_id], name: "lead_campaign_disqual_reason")
+  @@index([lead_campaign_disqual_reason_id], name: "lead_campaign_disqual_reason_id")
   @@index([lead_campaign_id], name: "lead_campaign_id")
   @@index([lead_converter_id], name: "lead_converter_id")
   @@index([lead_creator_id], name: "lead_creator_id")
   @@index([lead_owner_id], name: "lead_owner_id")
-  @@index([marketing_disqual_reason_id], name: "marketing_disqual_reason")
+  @@index([marketing_disqual_reason_id], name: "marketing_disqual_reason_id")
 }
 
 model LeadCampaign {
-  active               Boolean
-  company_id           Int?
-  default_for_lead_src Boolean?                     @default(false)
   id                   Int                          @default(autoincrement()) @id
+  name                 String
+  active               Boolean
   lead_direction       LeadCampaign_lead_direction?
   lead_source_id       Int
-  name                 String
+  company_id           Int?
   test_lead_campaign   Boolean
+  default_for_lead_src Boolean?                     @default(false)
   Company              Company?                     @relation(fields: [company_id], references: [id])
   LeadSource           LeadSource                   @relation(fields: [lead_source_id], references: [id])
   Account              Account[]
@@ -427,29 +427,29 @@ model LeadCampaign {
 }
 
 model LeadMarketingTag {
-  description String?
   id          Int     @default(autoincrement()) @id
   name        String
+  description String?
 }
 
 model LeadSource {
-  abbr             String
-  active           Boolean
   id               Int            @default(autoincrement()) @id
   name             String
-  test_lead_source Boolean
+  abbr             String
+  active           Boolean
   type             String?
+  test_lead_source Boolean
   LeadCampaign     LeadCampaign[]
 }
 
 model LeadWorkingEventLog {
-  comm_type_id              Int
-  event_timestamp           DateTime                  @default(dbgenerated())
   id                        Int                       @default(autoincrement()) @id
+  comm_type_id              Int
   lead_id                   Int
   lwe_dispo_id              Int
-  lwe_log_creator_id        Int
   notes                     String?
+  lwe_log_creator_id        Int
+  event_timestamp           DateTime                  @default(dbgenerated())
   test_log_entry            Boolean                   @default(false)
   EnumCommunicationType     EnumCommunicationType     @relation(fields: [comm_type_id], references: [id])
   Lead                      Lead                      @relation(fields: [lead_id], references: [id])
@@ -463,23 +463,23 @@ model LeadWorkingEventLog {
 }
 
 model Location {
+  id                           Int                           @default(autoincrement()) @id
   address_one                  String
   address_two                  String?
-  ahj_id                       Int?
-  assessment_id                Int?
-  building_type                Location_building_type?
   city                         String
-  gate_code                    String?
-  HOA                          Boolean?
-  id                           Int                           @default(autoincrement()) @id
+  state_abbr                   String
+  zip                          String
   latitude                     Float?
   longitude                    Float?
-  square_feet                  Int?
-  state_abbr                   String
-  stories                      Int?
+  gate_code                    String?
   test_location                Boolean
+  square_feet                  Int?
+  stories                      Int?
+  assessment_id                Int?
+  ahj_id                       Int?
   year_built                   Int?
-  zip                          String
+  HOA                          Boolean?
+  building_type                Location_building_type?
   zzz___AssessmentAnswer___old zzz___AssessmentAnswer___old? @relation(fields: [assessment_id], references: [id])
   Account                      Account[]
   Contact                      Contact[]
@@ -488,33 +488,33 @@ model Location {
 }
 
 model Office {
+  id            Int         @default(autoincrement()) @id
+  name          String
   address_one   String
   address_two   String?
   city          String
-  has_warehouse Boolean
-  id            Int         @default(autoincrement()) @id
+  zip           String
+  state_abbr    String
   latitude      String?
   longitude     String?
-  name          String
-  state_abbr    String
+  has_warehouse Boolean
   test_office   Boolean
-  zip           String
   SalesTeam     SalesTeam[]
 }
 
 model Opportunity {
-  agreement_approval_step              Int?
-  amended_from_id                      Int?
-  creator_id                           Int
-  credit_tier                          Opportunity_credit_tier?
   id                                   Int                                         @default(autoincrement()) @id
-  presentation_appointment_stage       Opportunity_presentation_appointment_stage?
-  products_id                          String?
-  solar_design_steps                   Opportunity_solar_design_steps?
-  stage                                Opportunity_stage?
   status                               Opportunity_status                          @default(Active)
-  total_amount                         Int?
+  stage                                Opportunity_stage?
+  creator_id                           Int
   updated_by_id                        Int?
+  total_amount                         Int?
+  products_id                          String?
+  credit_tier                          Opportunity_credit_tier?
+  amended_from_id                      Int?
+  solar_design_steps                   Opportunity_solar_design_steps?
+  presentation_appointment_stage       Opportunity_presentation_appointment_stage?
+  agreement_approval_step              Int?
   EnumAgreementApprovalStep            EnumAgreementApprovalStep?                  @relation(fields: [agreement_approval_step], references: [id])
   Opportunity                          Opportunity?                                @relation("OpportunityToOpportunity_amended_from_id", fields: [amended_from_id], references: [id])
   User_Opportunity_creator_idToUser    User                                        @relation("Opportunity_creator_idToUser", fields: [creator_id], references: [id])
@@ -529,48 +529,48 @@ model Opportunity {
 }
 
 model OpportunityProduct {
-  active              Boolean
-  amps                String?
-  battery_energy_kw   String?
-  battery_power_kw    String?
-  battery_size_kw     String?
-  color               String?
-  date_added          String?
-  date_updated        String?
-  description         String?
-  energy              String?
   id                  Int                     @default(autoincrement()) @id
-  info_card_link      String?
-  inventory_id        String?
-  inverter_monitoring String?
-  inverter_size_kw    String?
-  manufacturer        String?
-  marketing_matrix    Int?
-  model_number        String
   name                String
-  power               String?
   type                OpportunityProduct_type
   type_detail         String?
-  volts               String?
+  description         String?
+  model_number        String
+  active              Boolean
+  marketing_matrix    Int?
+  manufacturer        String?
+  color               String?
   warranty_info       String?
   watts               String?
   watts_ptc           String?
+  volts               String?
+  amps                String?
+  energy              String?
+  power               String?
+  inverter_monitoring String?
+  date_added          String?
+  date_updated        String?
+  inventory_id        String?
+  inverter_size_kw    String?
+  battery_size_kw     String?
+  battery_power_kw    String?
+  battery_energy_kw   String?
+  info_card_link      String?
 }
 
 model PresentationAppointment {
-  appointment_datetime                                                                            DateTime
-  created_by                                                                                      Int
-  dispositioner_id                                                                                Int?
   id                                                                                              Int                                    @default(autoincrement()) @id
-  is_reschedule                                                                                   Boolean
-  note                                                                                            String?
-  opportunity_id                                                                                  Int?
+  appointment_datetime                                                                            DateTime
   presentation_dispo_id                                                                           Int                                    @default(1)
-  presented_type                                                                                  PresentationAppointment_presented_type @default(In_Person)
+  note                                                                                            String?
+  is_reschedule                                                                                   Boolean
   presenter_id                                                                                    Int
-  rescheduled_by                                                                                  Int?
-  rescheduled_from                                                                                Int?
+  dispositioner_id                                                                                Int?
+  opportunity_id                                                                                  Int?
+  presented_type                                                                                  PresentationAppointment_presented_type @default(In_Person)
   rescheduled_to                                                                                  Int?
+  rescheduled_from                                                                                Int?
+  rescheduled_by                                                                                  Int?
+  created_by                                                                                      Int
   User_PresentationAppointment_created_byToUser                                                   User                                   @relation("PresentationAppointment_created_byToUser", fields: [created_by], references: [id])
   User_PresentationAppointment_dispositioner_idToUser                                             User?                                  @relation("PresentationAppointment_dispositioner_idToUser", fields: [dispositioner_id], references: [id])
   Opportunity                                                                                     Opportunity?                           @relation(fields: [opportunity_id], references: [id])
@@ -593,25 +593,25 @@ model PresentationAppointment {
 }
 
 model Role {
-  default_access String?
   id             Int     @default(autoincrement()) @id
   name           String
+  default_access String?
   test_role      Boolean
   User           User[]
 }
 
 model SalesTeam {
-  active                                Boolean
-  avatar_link                           String?
-  child_team_id                         Int?
   id                                    Int     @default(autoincrement()) @id
   name                                  String  @unique
-  office_id                             Int
-  parent_team_id                        Int?
   team_lead_one_id                      Int?
   team_lead_two_id                      Int?
-  test_sales_team                       Boolean
+  office_id                             Int
   type                                  String
+  active                                Boolean
+  test_sales_team                       Boolean
+  parent_team_id                        Int?
+  child_team_id                         Int?
+  avatar_link                           String?
   Office                                Office  @relation(fields: [office_id], references: [id])
   User_SalesTeam_team_lead_one_idToUser User?   @relation("SalesTeam_team_lead_one_idToUser", fields: [team_lead_one_id], references: [id])
   User_SalesTeamToUser_team_id          User[]  @relation("SalesTeamToUser_team_id")
@@ -626,19 +626,19 @@ model SmartReportSnapshot {
 }
 
 model Task {
-  assigned_to_group               Int?
-  assigned_to_id                  Int?
-  complete                        Boolean       @default(false)
-  completed_by_id                 Int?
-  completed_date                  DateTime?
-  creator_id                      Int?
-  date_updated                    DateTime?
-  due_date                        DateTime
   id                              Int           @default(autoincrement()) @id
-  note_content                    String
-  priority                        Task_priority
+  creator_id                      Int?
   type_id                         Int
+  priority                        Task_priority
+  due_date                        DateTime
+  note_content                    String
+  date_updated                    DateTime?
   updated_by_id                   Int?
+  assigned_to_id                  Int?
+  assigned_to_group               Int?
+  complete                        Boolean       @default(false)
+  completed_date                  DateTime?
+  completed_by_id                 Int?
   Group                           Group?        @relation(fields: [assigned_to_group], references: [id])
   User_Task_assigned_to_idToUser  User?         @relation("Task_assigned_to_idToUser", fields: [assigned_to_id], references: [id])
   User_Task_completed_by_idToUser User?         @relation("Task_completed_by_idToUser", fields: [completed_by_id], references: [id])
@@ -655,51 +655,51 @@ model Task {
 }
 
 model TMY3Baseline {
-  area           String?
   id             Int     @default(autoincrement()) @id
+  area           String?
   month_baseline String?
   year_total     String?
 }
 
-// The underlying table does not contain a unique identifier and can therefore currently not be handled.
+// The underlying table does not contain a valid unique identifier and can therefore currently not be handled.
 // model tmy3_data {
-  // area     String?
-  // day      Int?
-  // hour     Int?
   // id       Int?
-  // kw_usage Float?
+  // area     String?
+  // hour     Int?
+  // day      Int?
   // month    Int?
+  // kw_usage Float?
 // }
 
 model User {
-  access                                                                     String?
-  address_one                                                                String?
-  address_two                                                                String?
-  avatar_link                                                                String?
-  city                                                                       String?
-  company_id                                                                 Int
-  created_by                                                                 Int?
-  email_nerd                                                                 String                         @unique
-  email_personal                                                             String
-  employment_status                                                          Boolean
-  entity_type                                                                String?
-  first_name                                                                 String
   id                                                                         Int                            @default(autoincrement()) @id
+  first_name                                                                 String
+  preferred_first_name                                                       String?
+  avatar_link                                                                String?
   last_name                                                                  String
-  payroll_id                                                                 Int?
+  suffix                                                                     String?
   phone_cell                                                                 String
   phone_cell_carrier                                                         String?
   phone_home                                                                 String?
-  preferred_first_name                                                       String?
-  referred_by                                                                Int?
-  role_id                                                                    Int
+  email_personal                                                             String
+  email_nerd                                                                 String                         @unique
   security_pin                                                               Int?
-  state_abbr                                                                 String?
-  suffix                                                                     String?
-  team_id                                                                    Int
-  test_user                                                                  Boolean
   third_party_ids                                                            String?
+  team_id                                                                    Int
+  role_id                                                                    Int
+  access                                                                     String?
+  entity_type                                                                String?
+  company_id                                                                 Int
+  address_one                                                                String?
+  address_two                                                                String?
+  city                                                                       String?
   zip                                                                        String?
+  state_abbr                                                                 String?
+  payroll_id                                                                 Int?
+  employment_status                                                          Boolean
+  test_user                                                                  Boolean
+  created_by                                                                 Int?
+  referred_by                                                                Int?
   Company                                                                    Company                        @relation(fields: [company_id], references: [id])
   Role                                                                       Role                           @relation(fields: [role_id], references: [id])
   SalesTeam_SalesTeamToUser_team_id                                          SalesTeam                      @relation("SalesTeamToUser_team_id", fields: [team_id], references: [id])
@@ -733,179 +733,179 @@ model User {
 }
 
 model UtilityCompany {
-  abbreviation                   String
-  contact_name                   String?
-  dso_estimate                   String?
   id                             Int                            @default(autoincrement()) @id
-  inked_interconnection_required Boolean?
-  interconnection_online         Boolean?
-  max_residential_system_size    Boolean?
   name                           String
-  net_metering                   Boolean
+  abbreviation                   String
+  type                           UtilityCompany_type
+  state                          String
   phone                          String?
-  preferred_installer_exists     Boolean?
-  preferred_installer_on_list    Boolean?
+  contact_name                   String?
+  net_metering                   Boolean
+  interconnection_online         Boolean?
+  solar_specific_plan            Boolean?
+  max_residential_system_size    Boolean?
   rebate_program                 Boolean?
   rebate_program_id              String?
-  solar_specific_plan            Boolean?
-  state                          String
-  type                           UtilityCompany_type
+  inked_interconnection_required Boolean?
+  preferred_installer_exists     Boolean?
+  preferred_installer_on_list    Boolean?
+  dso_estimate                   String?
   zzz___AssessmentAnswer___old   zzz___AssessmentAnswer___old[]
 }
 
 model UtilityRatePlan {
-  account_fee          String?
-  active               Boolean?
-  buy_back_rate        String?
-  demand_rate_one      String?
-  demand_rate_three    String?
-  demand_rate_two      String?
-  demand_tier          String?
   id                   Int      @default(autoincrement()) @id
-  kwh_add_fee          String?
-  minimum_bill         String?
-  peak_end_hour        String?
-  peak_start_hour      String?
-  peak_two_end_hour    String?
-  peak_two_start_hour  String?
-  post_solar_default   Boolean?
-  pre_solar_default    Boolean?
-  rate_plan            String?
-  solar_eligible       String?
-  solar_kw_fee         String?
-  state                String?
-  superpeak_end_hour   String?
-  superpeak_start_hour String?
-  tax                  String?
-  tier_one_ceiling     String?
-  tier_one_offpeak     String?
-  tier_one_peak        String?
-  tier_one_superpeak   String?
-  tier_three_offpeak   String?
-  tier_three_peak      String?
-  tier_three_superpeak String?
-  tier_two_ceiling     String?
-  tier_two_offpeak     String?
-  tier_two_peak        String?
-  tier_two_superpeak   String?
   utility_abbr         String
   utility_name         String?
+  rate_plan            String?
+  state                String?
+  account_fee          String?
+  tax                  String?
+  buy_back_rate        String?
+  minimum_bill         String?
+  demand_tier          String?
+  tier_one_peak        String?
+  tier_two_peak        String?
+  tier_three_peak      String?
+  tier_one_offpeak     String?
+  tier_two_offpeak     String?
+  tier_three_offpeak   String?
+  tier_one_superpeak   String?
+  tier_two_superpeak   String?
+  tier_three_superpeak String?
+  demand_rate_one      String?
+  demand_rate_two      String?
+  demand_rate_three    String?
+  peak_start_hour      String?
+  peak_end_hour        String?
+  peak_two_start_hour  String?
+  peak_two_end_hour    String?
+  superpeak_start_hour String?
+  superpeak_end_hour   String?
+  tier_one_ceiling     String?
+  tier_two_ceiling     String?
+  kwh_add_fee          String?
+  solar_kw_fee         String?
+  solar_eligible       String?
+  pre_solar_default    Boolean?
+  post_solar_default   Boolean?
+  active               Boolean?
 }
 
 model UtilityRebateProgram {
-  active                Boolean?
+  id                    Int                                @default(autoincrement()) @id
+  product_type          UtilityRebateProgram_product_type?
+  product_id            Int?
   date_added_by_company DateTime?
   date_expires          DateTime?
+  active                Boolean?
   description           String?
-  id                    Int                                @default(autoincrement()) @id
-  product_id            Int?
-  product_type          UtilityRebateProgram_product_type?
 }
 
 model UtilityRegion {
+  id                       Int     @default(autoincrement()) @id
+  utility_company          String?
+  utility_name             String?
+  region_label             String?
   baseline_summer          String?
   baseline_summer_electric String?
   baseline_winter          String?
   baseline_winter_electric String?
-  id                       Int     @default(autoincrement()) @id
-  region_label             String?
-  utility_company          String?
-  utility_name             String?
 }
 
 model zzz___AssessmentAnswer___old {
-  ac_unit_age_year                                   Int?
-  ac_unit_condition                                  zzz___AssessmentAnswer___old_ac_unit_condition?
+  id                                                 Int                                                              @default(autoincrement()) @id
+  date_created                                       DateTime?
+  creator_id                                         Int
+  home_ownership                                     Boolean?
+  existing_solar_size_kw                             Int?
+  existing_solar_image                               String?
+  test_assessment                                    Boolean?
+  date_updated                                       DateTime?
+  updater_id                                         Int?
+  existing_solar                                     Boolean?
+  existing_solar_install_or_purchase                 zzz___AssessmentAnswer___old_existing_solar_install_or_purchase?
+  roof_age_year                                      Int?
+  roof_condition                                     zzz___AssessmentAnswer___old_roof_condition?
   ac_unit_quantity                                   Int?
   ac_unit_type                                       String?
-  asbestos_present                                   Boolean?
-  backup_power_interest                              Boolean?
-  creator_id                                         Int
-  date_created                                       DateTime?
-  date_updated                                       DateTime?
-  electric_vehicle                                   Boolean?
-  ev_next_five_year_delta_est                        zzz___AssessmentAnswer___old_ev_next_five_year_delta_est?
+  ac_unit_condition                                  zzz___AssessmentAnswer___old_ac_unit_condition?
+  ac_unit_age_year                                   Int?
+  has_pool                                           Boolean?
+  existing_duct_seal_condition                       zzz___AssessmentAnswer___old_existing_duct_seal_condition?
+  existing_pool_variable_speed_pump                  Boolean?
+  existing_led_amount                                zzz___AssessmentAnswer___old_existing_led_amount?
+  existing_thermostat_type                           zzz___AssessmentAnswer___old_existing_thermostat_type?
+  insulation_ee_standards_past_five_yrs              Boolean?
+  existing_insulation_year                           Int?
+  existing_duct_seal                                 Boolean?
+  lighting_efficiency                                zzz___AssessmentAnswer___old_lighting_efficiency?
+  thermostat_quantity                                Int?
+  has_wifi                                           Boolean?
+  existing_insulation_condition                      zzz___AssessmentAnswer___old_existing_insulation_condition?
+  existing_duct_seal_year                            Int?
+  existing_solar_install_year                        Int?
+  existing_solar_condition                           zzz___AssessmentAnswer___old_existing_solar_condition?
   existing_air_seal                                  Boolean?
   existing_air_seal_age                              Int?
   existing_air_seal_condition                        zzz___AssessmentAnswer___old_existing_air_seal_condition?
-  existing_battery                                   Boolean?
-  existing_battery_age_year                          Int?
-  existing_battery_quantity                          Int?
-  existing_battery_type                              String?
-  existing_consumption_monitoring                    Boolean?
-  existing_consumption_monitoring_detail             String?
-  existing_dryer                                     Boolean?
-  existing_dryer_age_year                            Int?
-  existing_dryer_condition                           zzz___AssessmentAnswer___old_existing_dryer_condition?
-  existing_dryer_type                                zzz___AssessmentAnswer___old_existing_dryer_type?
-  existing_duct_seal                                 Boolean?
-  existing_duct_seal_condition                       zzz___AssessmentAnswer___old_existing_duct_seal_condition?
-  existing_duct_seal_year                            Int?
-  existing_ev_charger                                Boolean?
-  existing_ev_charger_age_year                       Int?
-  existing_ev_charger_condition                      zzz___AssessmentAnswer___old_existing_ev_charger_condition?
-  existing_ev_charger_detail                         String?
-  existing_ev_charger_type                           String?
-  existing_insulation_condition                      zzz___AssessmentAnswer___old_existing_insulation_condition?
-  existing_insulation_year                           Int?
-  existing_led_amount                                zzz___AssessmentAnswer___old_existing_led_amount?
-  existing_ozone_system                              Boolean?
-  existing_pearl_certification                       Boolean?
-  existing_pearl_cert_detail                         String?
-  existing_pool_remote_features                      Boolean?
-  existing_pool_variable_speed_pump                  Boolean?
-  existing_production_monitoring                     Boolean?
-  existing_production_monitoring_detail              String?
-  existing_solar                                     Boolean?
-  existing_solar_condition                           zzz___AssessmentAnswer___old_existing_solar_condition?
-  existing_solar_cover_utility_bill                  Boolean?
-  existing_solar_detail                              String?
-  existing_solar_image                               String?
-  existing_solar_install_or_purchase                 zzz___AssessmentAnswer___old_existing_solar_install_or_purchase?
-  existing_solar_install_year                        Int?
-  existing_solar_monitoring_type                     String?
-  existing_solar_own_lease_ppa                       zzz___AssessmentAnswer___old_existing_solar_own_lease_ppa?
-  existing_solar_size_kw                             Int?
-  existing_thermostat_type                           zzz___AssessmentAnswer___old_existing_thermostat_type?
-  has_pool                                           Boolean?
-  has_wifi                                           Boolean?
-  hoa                                                Boolean?
-  home_built_year                                    Int?
-  home_ownership                                     Boolean?
-  home_stories_tall                                  Int?
-  id                                                 Int                                                              @default(autoincrement()) @id
-  indoor_air_quality_important                       Boolean?
-  insulation_ee_standards_past_five_yrs              Boolean?
-  lead_id                                            Int?
-  lighting_efficiency                                zzz___AssessmentAnswer___old_lighting_efficiency?
-  living_environment_sealed                          Boolean?
-  moving_in_next_12month                             Int?
-  opportunity_id                                     Int?
-  pay_federal_taxes                                  Int?
-  roof_age_year                                      Int?
-  roof_condition                                     zzz___AssessmentAnswer___old_roof_condition?
-  roof_flat_or_pitch                                 zzz___AssessmentAnswer___old_roof_flat_or_pitch?
-  roof_material                                      zzz___AssessmentAnswer___old_roof_material?
-  square_footage_customer_est                        Int?
-  test_assessment                                    Boolean?
-  thermostat_quantity                                Int?
-  thermostat_summer_avg_estimate                     Int?
-  thermostat_winter_avg_estimate                     Int?
-  updater_id                                         Int?
-  utility_bill_avg_cost_annual                       Int?
-  utility_bill_avg_cost_month                        Int?
-  utility_bill_avg_kWh_annual                        Int?
-  utility_bill_avg_kWh_month                         Int?
-  utility_bill_cost_months_detail                    String?
-  utility_bill_graph_img                             String?
-  utility_bill_img                                   String?
-  utility_bill_kWh_months_detail                     String?
-  utility_bill_other_img                             String?
   utility_company                                    Int?
   utility_rate_plan                                  Int?
-  water_heater_age_year                              Int?
-  water_heater_condition                             zzz___AssessmentAnswer___old_water_heater_condition?
+  utility_bill_kWh_months_detail                     String?
+  utility_bill_cost_months_detail                    String?
+  utility_bill_avg_kWh_annual                        Int?
+  utility_bill_avg_cost_annual                       Int?
+  utility_bill_avg_kWh_month                         Int?
+  utility_bill_avg_cost_month                        Int?
+  utility_bill_img                                   String?
+  utility_bill_graph_img                             String?
+  utility_bill_other_img                             String?
   water_heater_type                                  zzz___AssessmentAnswer___old_water_heater_type?
+  water_heater_condition                             zzz___AssessmentAnswer___old_water_heater_condition?
+  water_heater_age_year                              Int?
+  asbestos_present                                   Boolean?
+  existing_battery                                   Boolean?
+  existing_battery_type                              String?
+  existing_battery_age_year                          Int?
+  existing_battery_quantity                          Int?
+  existing_solar_detail                              String?
+  existing_dryer                                     Boolean?
+  existing_dryer_type                                zzz___AssessmentAnswer___old_existing_dryer_type?
+  existing_dryer_condition                           zzz___AssessmentAnswer___old_existing_dryer_condition?
+  existing_dryer_age_year                            Int?
+  electric_vehicle                                   Boolean?
+  existing_ev_charger                                Boolean?
+  existing_ev_charger_type                           String?
+  existing_ev_charger_condition                      zzz___AssessmentAnswer___old_existing_ev_charger_condition?
+  existing_ev_charger_age_year                       Int?
+  existing_ev_charger_detail                         String?
+  existing_pearl_certification                       Boolean?
+  existing_pearl_cert_detail                         String?
+  existing_production_monitoring                     Boolean?
+  existing_consumption_monitoring                    Boolean?
+  existing_production_monitoring_detail              String?
+  existing_consumption_monitoring_detail             String?
+  existing_ozone_system                              Boolean?
+  living_environment_sealed                          Boolean?
+  indoor_air_quality_important                       Boolean?
+  backup_power_interest                              Boolean?
+  square_footage_customer_est                        Int?
+  moving_in_next_12month                             Int?
+  hoa                                                Boolean?
+  home_built_year                                    Int?
+  home_stories_tall                                  Int?
+  roof_flat_or_pitch                                 zzz___AssessmentAnswer___old_roof_flat_or_pitch?
+  roof_material                                      zzz___AssessmentAnswer___old_roof_material?
+  ev_next_five_year_delta_est                        zzz___AssessmentAnswer___old_ev_next_five_year_delta_est?
+  existing_pool_remote_features                      Boolean?
+  thermostat_winter_avg_estimate                     Int?
+  thermostat_summer_avg_estimate                     Int?
+  pay_federal_taxes                                  Int?
+  existing_solar_own_lease_ppa                       zzz___AssessmentAnswer___old_existing_solar_own_lease_ppa?
+  existing_solar_cover_utility_bill                  Boolean?
+  existing_solar_monitoring_type                     String?
+  lead_id                                            Int?
+  opportunity_id                                     Int?
   User_UserTozzz___AssessmentAnswer___old_creator_id User                                                             @relation("UserTozzz___AssessmentAnswer___old_creator_id", fields: [creator_id], references: [id])
   User_UserTozzz___AssessmentAnswer___old_updater_id User?                                                            @relation("UserTozzz___AssessmentAnswer___old_updater_id", fields: [updater_id], references: [id])
   UtilityCompany                                     UtilityCompany?                                                  @relation(fields: [utility_company], references: [id])
@@ -918,25 +918,17 @@ model zzz___AssessmentAnswer___old {
 }
 
 model zzz___AssessmentQuestion___old {
-  active            Boolean  @default(true)
-  description       String?
-  follow_up         Boolean?
   id                Int      @default(autoincrement()) @id
-  primary_tier      Boolean?
   question          String
   related_info_text String?
+  description       String?
   related_products  String?
+  active            Boolean  @default(true)
+  primary_tier      Boolean?
   secondary_tier    Boolean?
+  follow_up         Boolean?
 
   @@map("zzz - AssessmentQuestion - old")
-}
-
-enum Account_stage {
-  PreQualification
-  Qualification
-  Opportunity
-  Project
-  Service
 }
 
 enum Account_status {
@@ -948,6 +940,14 @@ enum Account_status {
 enum Account_type {
   Residential
   Commercial
+}
+
+enum Account_stage {
+  PreQualification
+  Qualification
+  Opportunity
+  Project
+  Service
 }
 
 enum AccountNote_type {
@@ -987,21 +987,25 @@ enum Location_building_type {
   Other
 }
 
+enum Opportunity_status {
+  Active
+  Hold
+  Closed___Won @map("Closed - Won")
+  Closed___Lost @map("Closed - Lost")
+  Cancelled
+}
+
+enum Opportunity_stage {
+  Assessment
+  Presentation_Appointment @map("Presentation Appointment")
+  Purchase_Agreement @map("Purchase Agreement")
+}
+
 enum Opportunity_credit_tier {
   Tier_A @map("Tier A")
   Tier_B @map("Tier B")
   Tier_C @map("Tier C")
   Tier_D @map("Tier D")
-}
-
-enum Opportunity_presentation_appointment_stage {
-  Unscheduled
-  Scheduled
-  Needs_to_be_Rescheduled @map("Needs to be Rescheduled")
-  Rescheduled
-  Complete
-  Incomplete
-  Cancelled
 }
 
 enum Opportunity_solar_design_steps {
@@ -1013,17 +1017,13 @@ enum Opportunity_solar_design_steps {
   Cancelled
 }
 
-enum Opportunity_stage {
-  Assessment
-  Presentation_Appointment @map("Presentation Appointment")
-  Purchase_Agreement @map("Purchase Agreement")
-}
-
-enum Opportunity_status {
-  Active
-  Hold
-  Closed___Won @map("Closed - Won")
-  Closed___Lost @map("Closed - Lost")
+enum Opportunity_presentation_appointment_stage {
+  Unscheduled
+  Scheduled
+  Needs_to_be_Rescheduled @map("Needs to be Rescheduled")
+  Rescheduled
+  Complete
+  Incomplete
   Cancelled
 }
 
@@ -1059,6 +1059,22 @@ enum UtilityRebateProgram_product_type {
   Reduction
 }
 
+enum zzz___AssessmentAnswer___old_existing_solar_install_or_purchase {
+  Installed_by_customer @map("Installed by customer")
+  Came_with_home @map("Came with home")
+
+   @@map("zzz - AssessmentAnswer - old_existing_solar_install_or_purchase")
+}
+
+enum zzz___AssessmentAnswer___old_roof_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_roof_condition")
+}
+
 enum zzz___AssessmentAnswer___old_ac_unit_condition {
   Poor
   Average
@@ -1066,39 +1082,6 @@ enum zzz___AssessmentAnswer___old_ac_unit_condition {
   Excellent
 
    @@map("zzz - AssessmentAnswer - old_ac_unit_condition")
-}
-
-enum zzz___AssessmentAnswer___old_ev_next_five_year_delta_est {
-  Going_up @map("Going up")
-  Staying_same @map("Staying same")
-  Going_down @map("Going down")
-
-   @@map("zzz - AssessmentAnswer - old_ev_next_five_year_delta_est")
-}
-
-enum zzz___AssessmentAnswer___old_existing_air_seal_condition {
-  Poor
-  Average
-  Good
-  Excellent
-
-   @@map("zzz - AssessmentAnswer - old_existing_air_seal_condition")
-}
-
-enum zzz___AssessmentAnswer___old_existing_dryer_condition {
-  Poor
-  Average
-  Good
-  Excellent
-
-   @@map("zzz - AssessmentAnswer - old_existing_dryer_condition")
-}
-
-enum zzz___AssessmentAnswer___old_existing_dryer_type {
-  Gas
-  Electric
-
-   @@map("zzz - AssessmentAnswer - old_existing_dryer_type")
 }
 
 enum zzz___AssessmentAnswer___old_existing_duct_seal_condition {
@@ -1110,24 +1093,6 @@ enum zzz___AssessmentAnswer___old_existing_duct_seal_condition {
    @@map("zzz - AssessmentAnswer - old_existing_duct_seal_condition")
 }
 
-enum zzz___AssessmentAnswer___old_existing_ev_charger_condition {
-  Poor
-  Average
-  Good
-  Excellent
-
-   @@map("zzz - AssessmentAnswer - old_existing_ev_charger_condition")
-}
-
-enum zzz___AssessmentAnswer___old_existing_insulation_condition {
-  Poor
-  Average
-  Good
-  Excellent
-
-   @@map("zzz - AssessmentAnswer - old_existing_insulation_condition")
-}
-
 enum zzz___AssessmentAnswer___old_existing_led_amount {
   None
   Some
@@ -1135,30 +1100,6 @@ enum zzz___AssessmentAnswer___old_existing_led_amount {
   All
 
    @@map("zzz - AssessmentAnswer - old_existing_led_amount")
-}
-
-enum zzz___AssessmentAnswer___old_existing_solar_condition {
-  Poor
-  Average
-  Good
-  Excellent
-
-   @@map("zzz - AssessmentAnswer - old_existing_solar_condition")
-}
-
-enum zzz___AssessmentAnswer___old_existing_solar_install_or_purchase {
-  Installed_by_customer @map("Installed by customer")
-  Came_with_home @map("Came with home")
-
-   @@map("zzz - AssessmentAnswer - old_existing_solar_install_or_purchase")
-}
-
-enum zzz___AssessmentAnswer___old_existing_solar_own_lease_ppa {
-  Own
-  Lease
-  PPA
-
-   @@map("zzz - AssessmentAnswer - old_existing_solar_own_lease_ppa")
 }
 
 enum zzz___AssessmentAnswer___old_existing_thermostat_type {
@@ -1178,13 +1119,73 @@ enum zzz___AssessmentAnswer___old_lighting_efficiency {
    @@map("zzz - AssessmentAnswer - old_lighting_efficiency")
 }
 
-enum zzz___AssessmentAnswer___old_roof_condition {
+enum zzz___AssessmentAnswer___old_existing_insulation_condition {
   Poor
   Average
   Good
   Excellent
 
-   @@map("zzz - AssessmentAnswer - old_roof_condition")
+   @@map("zzz - AssessmentAnswer - old_existing_insulation_condition")
+}
+
+enum zzz___AssessmentAnswer___old_existing_solar_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_existing_solar_condition")
+}
+
+enum zzz___AssessmentAnswer___old_existing_air_seal_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_existing_air_seal_condition")
+}
+
+enum zzz___AssessmentAnswer___old_water_heater_type {
+  Gas
+  Electric
+  Tankless
+
+   @@map("zzz - AssessmentAnswer - old_water_heater_type")
+}
+
+enum zzz___AssessmentAnswer___old_water_heater_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_water_heater_condition")
+}
+
+enum zzz___AssessmentAnswer___old_existing_dryer_type {
+  Gas
+  Electric
+
+   @@map("zzz - AssessmentAnswer - old_existing_dryer_type")
+}
+
+enum zzz___AssessmentAnswer___old_existing_dryer_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_existing_dryer_condition")
+}
+
+enum zzz___AssessmentAnswer___old_existing_ev_charger_condition {
+  Poor
+  Average
+  Good
+  Excellent
+
+   @@map("zzz - AssessmentAnswer - old_existing_ev_charger_condition")
 }
 
 enum zzz___AssessmentAnswer___old_roof_flat_or_pitch {
@@ -1206,19 +1207,18 @@ enum zzz___AssessmentAnswer___old_roof_material {
    @@map("zzz - AssessmentAnswer - old_roof_material")
 }
 
-enum zzz___AssessmentAnswer___old_water_heater_condition {
-  Poor
-  Average
-  Good
-  Excellent
+enum zzz___AssessmentAnswer___old_ev_next_five_year_delta_est {
+  Going_up @map("Going up")
+  Staying_same @map("Staying same")
+  Going_down @map("Going down")
 
-   @@map("zzz - AssessmentAnswer - old_water_heater_condition")
+   @@map("zzz - AssessmentAnswer - old_ev_next_five_year_delta_est")
 }
 
-enum zzz___AssessmentAnswer___old_water_heater_type {
-  Gas
-  Electric
-  Tankless
+enum zzz___AssessmentAnswer___old_existing_solar_own_lease_ppa {
+  Own
+  Lease
+  PPA
 
-   @@map("zzz - AssessmentAnswer - old_water_heater_type")
+   @@map("zzz - AssessmentAnswer - old_existing_solar_own_lease_ppa")
 }
